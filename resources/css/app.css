@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Bricolage Grotesque', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+    /* QuickBooks green (#2CA01C) scale */
+    --color-brand-50: #f0f9ee;
+    --color-brand-100: #dcf1d6;
+    --color-brand-200: #b8e2ad;
+    --color-brand-300: #8ccf7b;
+    --color-brand-400: #5cb948;
+    --color-brand-500: #3aa828;
+    --color-brand-600: #2ca01c;
+    --color-brand-700: #238316;
+    --color-brand-800: #1d6614;
+    --color-brand-900: #164d10;
+    --color-brand-950: #0b2a09;
+
+    /* Deep green-black ink for text and dark sections */
+    --color-ink-50: #f5f7f5;
+    --color-ink-100: #e7ebe8;
+    --color-ink-200: #cfd6d1;
+    --color-ink-300: #a9b5ad;
+    --color-ink-400: #7c8b81;
+    --color-ink-500: #5c6b61;
+    --color-ink-600: #45524a;
+    --color-ink-700: #333e37;
+    --color-ink-800: #212a24;
+    --color-ink-900: #141b16;
+    --color-ink-950: #0b100d;
+
+    --color-paper: #fbfaf6;
+}
+
+@layer base {
+    html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+    body { font-feature-settings: 'ss01', 'cv11'; }
+    ::selection { background: var(--color-brand-200); color: var(--color-ink-900); }
+}
+
+@utility tabular { font-variant-numeric: tabular-nums; }
+
+/* Range input styled to brand */
+.cb-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; background: linear-gradient(to right, var(--color-brand-600) var(--fill, 30%), var(--color-ink-200) var(--fill, 30%)); outline: none; }
+.cb-range::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 999px; background: #fff; border: 2px solid var(--color-brand-600); box-shadow: 0 1px 3px rgb(0 0 0 / .2); cursor: grab; }
+.cb-range::-moz-range-thumb { width: 22px; height: 22px; border-radius: 999px; background: #fff; border: 2px solid var(--color-brand-600); cursor: grab; }
+.cb-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--color-brand-200); }
+
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details[open] .cb-plus { transform: rotate(45deg); }
+
+@media (prefers-reduced-motion: no-preference) {
+    .cb-rise { animation: cb-rise .6s cubic-bezier(.2,.7,.2,1) both; }
+    .cb-rise-2 { animation-delay: .12s; }
+    .cb-rise-3 { animation-delay: .24s; }
+    .cb-ping { animation: cb-ping 2.4s ease-out infinite; }
+}
+@keyframes cb-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes cb-ping { 0% { box-shadow: 0 0 0 0 rgb(44 160 28 / .45); } 70%, 100% { box-shadow: 0 0 0 10px rgb(44 160 28 / 0); } }
