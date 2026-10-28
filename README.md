@@ -57,6 +57,13 @@ Tests use the `coinbox_test` PostgreSQL database: `php artisan test`.
 | `app/Http/Controllers/Api/V1/` | Merchant REST API |
 | `app/Filament/Merchant`, `app/Filament/Admin` | Panels |
 
+## Billing
+
+- Fee and free allowance: **admin → Pricing** (default 1% from KES 10,000/month). It's applied to the month's successful payment volume.
+- Each merchant has a numeric **merchant number** (`merchants.account_number`) and a prepaid **float** (`float_entries`, balance = sum).
+- `coinbox:invoices` runs on the 1st (06:00 Nairobi) for the previous month. It issues `billing_invoices` (INV001, INV002… per merchant) and pays them from the float where possible. `coinbox:low-float` sends top-up reminders daily, at most one per merchant per week.
+- Merchants pay **PayBill 4072129**: Account `234` tops up the float, and Account `234#INV001` pays that invoice. Connect CoinBox's own PayBill as an account and select it under *Pricing* for automatic matching. Otherwise record payments in **admin → Billing → Float / Invoices**. Each receipt is only ever credited once.
+
 ## Production checklist
 
 - **Public HTTPS `APP_URL`** on port 443. Safaricom will not call `localhost`, plain HTTP or tunnel URLs in production. The domain itself must not contain `mpesa` or `safaricom`.

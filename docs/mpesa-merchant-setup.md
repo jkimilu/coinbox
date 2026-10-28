@@ -153,6 +153,17 @@ For pagination, pass the `next_cursor` value back as `?cursor=` to get the next 
 
 ---
 
+## Billing: your CoinBox float
+
+CoinBox charges a small processing fee on the payments it records for you (see **Billing** in the portal for the current rate and free allowance). Your customers' money is never involved: it always stays in your own PayBill, Till or bank.
+
+- **Keep a float.** Prepay CoinBox by M-Pesa to **PayBill 4072129**, using your **merchant number** as the Account (shown on the Billing page, e.g. `234`). Monthly invoices are paid from the float automatically.
+- **Pay an invoice directly.** Use Account **merchant number#invoice number**, e.g. `234#INV001`. Anything paid over the amount owed stays in your float.
+- **Top-up advice.** The Billing page and dashboard tell you how much to top up, based on last month's invoice and this month's projected fee. We also email you if your float runs low.
+- Invoices are issued on the 1st of each month for the previous month, and only once you pass the free allowance.
+
+---
+
 ## Quick checklist
 
 - [ ] Daraja production app live for my PayBill / store (HO) number
@@ -160,3 +171,4 @@ For pagination, pass the `next_cursor` value back as `?cursor=` to get the next 
 - [ ] Webhook endpoint added, signature verification in place, test event delivered
 - [ ] API key created (if pulling transactions)
 - [ ] Made a real KES 1–10 test payment and saw it under **Transactions**
+- [ ] Topped up my CoinBox float (PayBill 4072129, Account = my merchant number)

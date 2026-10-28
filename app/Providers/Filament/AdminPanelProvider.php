@@ -8,6 +8,8 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
+use Filament\Support\Enums\Width;
+use Filament\View\PanelsRenderHook;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
@@ -28,7 +30,10 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('CoinBox Admin')
-            ->favicon(asset('favicon.svg'))
+            ->favicon('/favicon.svg')
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.favicons'))
+            ->maxContentWidth(Width::Full)
+            ->sidebarWidth('18rem')
             ->brandLogo(fn () => view('filament.brand', ['label' => 'CoinBox Admin']))
             ->brandLogoHeight('2rem')
             ->colors([

@@ -2,7 +2,9 @@
 
 namespace App\Payments;
 
+use App\Billing\BillingService;
 use App\Models\ProviderEvent;
+use App\Support\Billing;
 use App\Models\Transaction;
 use App\Payments\Webhooks\WebhookDispatcher;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -73,6 +75,11 @@ class PaymentIngestor
                 }
 
                 $this->webhooks->dispatch($txn, 'transaction.'.$txn->status);
+
+                // Payments into CoinBox's own PayBill are merchants paying their fees / topping up float.
+                if ($account->id === Billing::platformAccountId()) {
+                    DB::afterCommit(fn () => app(BillingService::class)->applyPlatformPayment($txn));
+                }
 
                 return $txn;
             });

@@ -39,11 +39,13 @@ class MerchantResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
+                TextColumn::make('account_number')->label('No.')->sortable()->searchable()->fontFamily('mono'),
                 TextColumn::make('name')->searchable()->weight('bold'),
                 TextColumn::make('email')->searchable(),
                 TextColumn::make('phone'),
                 TextColumn::make('payment_accounts_count')->counts('paymentAccounts')->label('Accounts'),
                 TextColumn::make('transactions_count')->counts('transactions')->label('Transactions'),
+                TextColumn::make('float')->label('Float')->state(fn (Merchant $r) => $r->floatBalance())->money('KES')->alignEnd(),
                 TextColumn::make('status')->badge()->color(fn ($state) => $state === 'active' ? 'success' : 'danger'),
                 TextColumn::make('created_at')->date(),
             ])
