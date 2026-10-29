@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ProcessProviderEvent;
 use App\Models\PaymentAccount;
 use App\Models\ProviderEvent;
+use App\Payments\AccountRouter;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -97,6 +98,13 @@ class MpesaC2bController extends Controller
 
         if ($account->config('require_account_reference') && trim((string) ($payload['BillRefNumber'] ?? '')) === '') {
             return response()->json(['ResultCode' => 'C2B00012', 'ResultDesc' => 'Rejected']);
+        }
+
+        if ($account->config('require_known_account')) {
+            $router = app(AccountRouter::class);
+            if ($router->accountHasRoutes($account) && ! $router->match($account, $payload['BillRefNumber'] ?? null)['route']) {
+                return response()->json(['ResultCode' => 'C2B00012', 'ResultDesc' => 'Rejected']);
+            }
         }
 
         return response()->json(['ResultCode' => '0', 'ResultDesc' => 'Accepted']);

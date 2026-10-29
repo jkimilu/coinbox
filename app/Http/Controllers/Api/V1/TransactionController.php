@@ -12,6 +12,7 @@ class TransactionController extends ApiController
     {
         $data = $request->validate([
             'account_id' => 'nullable|string',
+            'account_code' => 'nullable|string|max:40',
             'status' => 'nullable|in:pending,succeeded,failed,reversed',
             'type' => 'nullable|in:payment,reversal',
             'reference' => 'nullable|string|max:100',
@@ -25,6 +26,7 @@ class TransactionController extends ApiController
         $page = Transaction::query()
             ->where('merchant_id', $this->merchant($request)->id)
             ->when($data['account_id'] ?? null, fn ($q, $v) => $q->where('payment_account_id', $this->stripPrefix($v, 'acct')))
+            ->when($data['account_code'] ?? null, fn ($q, $v) => $q->whereHas('accountRoute', fn ($r) => $r->where('code', strtoupper($v))))
             ->when($data['status'] ?? null, fn ($q, $v) => $q->where('status', $v))
             ->when($data['type'] ?? null, fn ($q, $v) => $q->where('type', $v))
             ->when($data['reference'] ?? null, fn ($q, $v) => $q->where('merchant_reference', $v))

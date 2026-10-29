@@ -16,7 +16,7 @@ use Throwable;
  */
 class PaymentIngestor
 {
-    public function __construct(protected WebhookDispatcher $webhooks) {}
+    public function __construct(protected WebhookDispatcher $webhooks, protected AccountRouter $router) {}
 
     public function process(ProviderEvent $event): ?Transaction
     {
@@ -34,8 +34,9 @@ class PaymentIngestor
         try {
             $adapter = $account->provider->adapter();
             $payment = $adapter->normalizeTransaction($account, $event->payload);
+            ['route' => $route, 'reference' => $reference] = $this->router->match($account, $payment->merchantReference);
 
-            return DB::transaction(function () use ($event, $account, $payment) {
+            return DB::transaction(function () use ($event, $account, $payment, $route, $reference) {
                 $existing = Transaction::query()
                     ->where('provider_id', $account->provider_id)
                     ->where('provider_transaction_id', $payment->providerTransactionId)
@@ -52,19 +53,20 @@ class PaymentIngestor
                 $txn = Transaction::create([
                     'merchant_id' => $account->merchant_id,
                     'payment_account_id' => $account->id,
+                    'account_route_id' => $route?->id,
                     'provider_id' => $account->provider_id,
                     'provider_event_id' => $event->id,
                     'type' => Transaction::TYPE_PAYMENT,
                     'provider_code' => $account->provider->code,
                     'payment_method' => $payment->paymentMethod,
                     'provider_transaction_id' => $payment->providerTransactionId,
-                    'merchant_reference' => $payment->merchantReference,
+                    'merchant_reference' => $reference,
                     'amount' => $payment->amount,
                     'currency' => $payment->currency,
                     'status' => $payment->status,
                     'payer_identifier' => $payment->payerIdentifier,
                     'payer_name' => $payment->payerName,
-                    'metadata' => $payment->metadata,
+                    'metadata' => array_filter([...$payment->metadata, 'bill_ref_number' => $payment->merchantReference]),
                     'paid_at' => $payment->paidAt,
                 ]);
 
@@ -77,7 +79,7 @@ class PaymentIngestor
                 $this->webhooks->dispatch($txn, 'transaction.'.$txn->status);
 
                 // Payments into CoinBox's own PayBill are merchants paying their fees / topping up float.
-                if ($account->id === Billing::platformAccountId()) {
+                if ($account->id === Billing::platformAccountId() && ! $txn->account_route_id) {
                     DB::afterCommit(fn () => app(BillingService::class)->applyPlatformPayment($txn));
                 }
 

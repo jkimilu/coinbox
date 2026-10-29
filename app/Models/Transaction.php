@@ -26,7 +26,7 @@ class Transaction extends Model
 
     /** Fields that may never change once written. */
     protected const IMMUTABLE = [
-        'merchant_id', 'payment_account_id', 'provider_id', 'type', 'provider_code', 'payment_method',
+        'merchant_id', 'payment_account_id', 'account_route_id', 'provider_id', 'type', 'provider_code', 'payment_method',
         'provider_transaction_id', 'merchant_reference', 'amount', 'currency', 'paid_at', 'reverses_transaction_id',
     ];
 
@@ -56,6 +56,7 @@ class Transaction extends Model
 
     public function merchant(): BelongsTo { return $this->belongsTo(Merchant::class); }
     public function paymentAccount(): BelongsTo { return $this->belongsTo(PaymentAccount::class); }
+    public function accountRoute(): BelongsTo { return $this->belongsTo(AccountRoute::class); }
     public function provider(): BelongsTo { return $this->belongsTo(PaymentProvider::class); }
     public function providerEvent(): BelongsTo { return $this->belongsTo(ProviderEvent::class); }
     public function reverses(): BelongsTo { return $this->belongsTo(self::class, 'reverses_transaction_id'); }
@@ -72,7 +73,9 @@ class Transaction extends Model
             'provider' => $this->provider_code,
             'payment_method' => $this->payment_method,
             'provider_transaction_id' => $this->provider_transaction_id,
+            'account_code' => $this->accountRoute?->code,
             'merchant_reference' => $this->merchant_reference,
+            'account_number' => $this->metadata['bill_ref_number'] ?? $this->merchant_reference,
             'amount' => (string) $this->amount,
             'currency' => $this->currency,
             'status' => $this->status,

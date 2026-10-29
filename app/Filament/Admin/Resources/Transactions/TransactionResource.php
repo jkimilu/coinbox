@@ -47,6 +47,7 @@ class TransactionResource extends Resource
                 TextColumn::make('paid_at')->dateTime('d M Y H:i', 'Africa/Nairobi')->sortable(),
                 TextColumn::make('merchant.name')->searchable(),
                 TextColumn::make('provider_transaction_id')->label('Receipt')->searchable()->copyable(),
+                TextColumn::make('accountRoute.code')->label('Acc no.')->fontFamily('mono')->placeholder('—'),
                 TextColumn::make('merchant_reference')->label('Reference')->searchable(),
                 TextColumn::make('amount')->money('KES')->sortable()->alignEnd(),
                 TextColumn::make('type')->badge(),

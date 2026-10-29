@@ -58,6 +58,7 @@ class PaymentAccount extends Model
     public function credentials(): BelongsTo { return $this->belongsTo(ProviderCredential::class, 'credentials_id'); }
     public function callbackEndpoint(): BelongsTo { return $this->belongsTo(CallbackEndpoint::class); }
     public function transactions(): HasMany { return $this->hasMany(Transaction::class); }
+    public function routes(): HasMany { return $this->hasMany(AccountRoute::class)->orderBy('code'); }
 
     public function config(string $key, mixed $default = null): mixed
     {

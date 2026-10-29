@@ -4,6 +4,7 @@ namespace App\Filament\Merchant\Resources\Transactions;
 
 use App\Filament\Merchant\Concerns\ScopedToMerchant;
 use App\Filament\Merchant\Resources\Transactions\Pages\ListTransactions;
+use App\Models\AccountRoute;
 use App\Models\PaymentAccount;
 use App\Models\Transaction;
 use BackedEnum;
@@ -50,7 +51,9 @@ class TransactionResource extends Resource
             TextEntry::make('status')->badge()->color(fn ($state) => self::statusColor($state)),
             TextEntry::make('type')->badge(),
             TextEntry::make('payment_method')->label('Method'),
-            TextEntry::make('merchant_reference')->label('Account / reference')->placeholder('—'),
+            TextEntry::make('metadata.bill_ref_number')->label('Account number entered')->placeholder('—')->fontFamily('mono'),
+            TextEntry::make('accountRoute.name')->label('Account no.')->formatStateUsing(fn ($state, $record) => $record->accountRoute->code.' · '.$state)->placeholder('—'),
+            TextEntry::make('merchant_reference')->label('Reference')->placeholder('—'),
             TextEntry::make('paymentAccount.display_name')->label('Account'),
             TextEntry::make('payer_name')->placeholder('—'),
             TextEntry::make('payer_identifier')->label('Payer phone (as sent by Safaricom)')->placeholder('—'),
@@ -68,6 +71,8 @@ class TransactionResource extends Resource
             ->columns([
                 TextColumn::make('paid_at')->dateTime('d M Y H:i', 'Africa/Nairobi')->sortable(),
                 TextColumn::make('provider_transaction_id')->label('Receipt')->searchable()->copyable(),
+                TextColumn::make('accountRoute.code')->label('Acc no.')->fontFamily('mono')->placeholder('—')
+                    ->tooltip(fn ($record) => $record->accountRoute?->name),
                 TextColumn::make('merchant_reference')->label('Reference')->searchable()->placeholder('—'),
                 TextColumn::make('payer_name')->searchable()->toggleable(),
                 TextColumn::make('amount')->money('KES')->sortable()->alignEnd(),
@@ -78,6 +83,9 @@ class TransactionResource extends Resource
             ->filters([
                 SelectFilter::make('payment_account_id')->label('Account')
                     ->options(fn () => PaymentAccount::query()->where('merchant_id', auth()->user()->merchant_id)->pluck('display_name', 'id')),
+                SelectFilter::make('account_route_id')->label('Account no.')
+                    ->options(fn () => AccountRoute::query()->where('merchant_id', auth()->user()->merchant_id)->with('paymentAccount')->get()
+                        ->mapWithKeys(fn ($r) => [$r->id => "{$r->paymentAccount->external_account_reference} · {$r->code} {$r->name}"])),
                 SelectFilter::make('status')->options(['succeeded' => 'Succeeded', 'pending' => 'Pending', 'reversed' => 'Reversed', 'failed' => 'Failed']),
                 SelectFilter::make('type')->options(['payment' => 'Payment', 'reversal' => 'Reversal']),
                 Filter::make('paid_at')

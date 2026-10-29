@@ -71,6 +71,21 @@ To see the exact URLs registered for you, open **Setup details** on the account.
 
 > **Important:** registering CoinBox *replaces* any confirmation URL your shortcode used before. If another system (an ERP or POS, for example) was receiving M-Pesa notifications directly, point it at CoinBox's webhooks or API instead.
 
+## Step 4b: Optional: several account numbers on one PayBill
+
+If different businesses, branches or systems share one PayBill, give each its own **account number**. Customers pay with Account **`<account number>#<reference>`**, for example **PayBill 4072129, Account `100#INV001`**.
+
+1. **M-Pesa accounts** → **Account numbers** on the PayBill.
+2. Add each account number (e.g. `100` *Sokofiti*, `200` *Branch 2*) and choose the webhook it should notify. You can create a new webhook right there.
+3. Save.
+
+What happens to a payment to `100#INV001`:
+- It is tagged with account number **100**, and **INV001** is saved as the reference.
+- The notification goes **only** to account 100's webhook. In the webhook and API, `account_code` is `"100"`, `merchant_reference` is `"INV001"` and `account_number` is `"100#INV001"`.
+- Customers can also pay just `100`, with no reference.
+
+Payments to an account number you haven't set up go to the PayBill's default webhook. They are never sent to another account number's webhook. Pull one account number's payments with `GET /api/v1/transactions?account_code=100`. If Safaricom has enabled validation (Step 5), you can also reject unknown account numbers.
+
 ## Step 5: Optional: payment validation
 
 By default Safaricom only sends **confirmations** (payment completed). If you want CoinBox to **reject** payments before they complete (for example, a PayBill payment with an empty account number, or below a minimum amount), ask Safaricom to **enable external validation** on your shortcode. Email **M-PESABusiness@safaricom.co.ke**. Then set the rules under **M-Pesa accounts → Edit**.
@@ -141,7 +156,7 @@ curl -H "Authorization: Bearer cbx_xxxxxxxxxxxx_..." https://YOUR-COINBOX-DOMAIN
 | `GET /api/v1/me` | Identify the authenticated merchant |
 | `GET /api/v1/accounts` | List connected PayBills and Tills |
 | `GET /api/v1/accounts/{id}/balance` | Collection totals for one account (see note) |
-| `GET /api/v1/transactions` | Filters: `account_id`, `status`, `type`, `reference`, `from`, `to`, `min_amount`, `max_amount`, `limit`, `cursor` |
+| `GET /api/v1/transactions` | Filters: `account_id`, `account_code`, `status`, `type`, `reference`, `from`, `to`, `min_amount`, `max_amount`, `limit`, `cursor` |
 | `GET /api/v1/transactions/{id}` | One transaction |
 | `GET /api/v1/transactions/reference/{reference}` | Find by invoice / account number |
 | `GET /api/v1/transactions/receipt/{receipt}` | Find by M-Pesa receipt (e.g. `QHX123ABC`) |
