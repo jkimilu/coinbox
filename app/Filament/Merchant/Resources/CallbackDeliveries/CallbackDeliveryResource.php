@@ -6,6 +6,7 @@ use App\Filament\Merchant\Resources\CallbackDeliveries\Pages\ListCallbackDeliver
 use App\Jobs\DeliverCallback;
 use App\Models\CallbackDelivery;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\CodeEntry;
@@ -23,9 +24,13 @@ class CallbackDeliveryResource extends Resource
 {
     protected static ?string $model = CallbackDelivery::class;
 
-    protected static ?string $navigationLabel = 'Webhook deliveries';
+    protected static ?string $modelLabel = 'log';
+
+    protected static ?string $navigationLabel = 'Logs';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInboxStack;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Developers';
 
     protected static ?int $navigationSort = 3;
 
@@ -57,13 +62,24 @@ class CallbackDeliveryResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('created_at')->dateTime('d M H:i:s', 'Africa/Nairobi'),
-                TextColumn::make('event')->badge(),
-                TextColumn::make('endpoint.url')->limit(40),
-                TextColumn::make('status')->badge()->color(fn ($state) => match ($state) { 'delivered' => 'success', 'failed' => 'danger', default => 'warning' }),
-                TextColumn::make('attempts'),
-                TextColumn::make('last_response_code')->label('HTTP'),
-                TextColumn::make('next_attempt_at')->label('Next retry')->since()->placeholder('—'),
+                TextColumn::make('created_at')->label('Sent')->dateTime('j M, H:i:s', 'Africa/Nairobi')
+                    ->tooltip(fn ($record) => $record->created_at->diffForHumans()),
+                TextColumn::make('event')->badge()->color('gray')
+                    ->tooltip(fn ($record) => ($record->payload['data']['provider_transaction_id'] ?? null) ? 'Payment '.$record->payload['data']['provider_transaction_id'].' · KES '.($record->payload['data']['amount'] ?? '') : null),
+                TextColumn::make('endpoint.url')->label('Endpoint')->limit(36)->tooltip(fn ($record) => $record->endpoint?->url),
+                TextColumn::make('status')->badge()
+                    ->icon(fn ($state) => match ($state) { 'delivered' => 'heroicon-m-check-circle', 'failed' => 'heroicon-m-x-circle', default => 'heroicon-m-arrow-path' })
+                    ->color(fn ($state) => match ($state) { 'delivered' => 'success', 'failed' => 'danger', default => 'warning' })
+                    ->formatStateUsing(fn ($state, $record) => ucfirst($state).($record->last_response_code ? ' · '.$record->last_response_code : ''))
+                    ->tooltip(fn ($record) => collect([
+                        $record->attempts.' '.str('attempt')->plural($record->attempts),
+                        $record->last_error ? 'Error: '.str($record->last_error)->limit(160) : null,
+                        $record->last_response_body && ! $record->last_error ? 'Response: '.str($record->last_response_body)->limit(160) : null,
+                        $record->next_attempt_at ? 'Next retry '.$record->next_attempt_at->diffForHumans() : null,
+                        $record->delivered_at ? 'Delivered '.$record->delivered_at->setTimezone('Africa/Nairobi')->format('j M H:i:s') : null,
+                    ])->filter()->implode("\n")),
+                TextColumn::make('attempts')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('next_attempt_at')->label('Next retry')->since()->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([SelectFilter::make('status')->options(['pending' => 'Pending', 'delivered' => 'Delivered', 'failed' => 'Failed'])])
             ->recordActions([

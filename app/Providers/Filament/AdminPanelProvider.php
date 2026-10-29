@@ -6,13 +6,16 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
+use App\Filament\Admin\Pages\Dashboard;
+use App\Filament\Shared\EditProfile;
+use App\Support\InitialsAvatarProvider;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
+use Filament\Auth\MultiFactor\Email\EmailAuthentication;
 use Filament\Panel;
 use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
 
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -29,15 +32,29 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->profile(EditProfile::class, isSimple: false)
             ->brandName('CoinBox Admin')
             ->favicon('/favicon.svg')
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.favicons'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn () => view('filament.sidebar-user'))
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.auth.passkey-login'))
+            // "Back to home" at the bottom of each sign-in card
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.auth.back-home'))
+            ->renderHook(PanelsRenderHook::AUTH_REGISTER_FORM_AFTER, fn () => view('filament.auth.back-home'))
+            ->renderHook(PanelsRenderHook::AUTH_PASSWORD_RESET_REQUEST_FORM_AFTER, fn () => view('filament.auth.back-home'))
+            ->multiFactorAuthentication([
+                AppAuthentication::make()->recoverable(),
+                EmailAuthentication::make(),
+            ])
             ->maxContentWidth(Width::Full)
             ->sidebarWidth('18rem')
             ->brandLogo(fn () => view('filament.brand', ['label' => 'CoinBox Admin']))
             ->brandLogoHeight('2rem')
+            ->viteTheme('resources/css/filament/merchant/theme.css')
+            ->font('Inter')
             ->colors([
-                'primary' => Color::hex('#2CA01C'),
+                'primary' => \App\Support\BrandColors::primary(),
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')
@@ -45,9 +62,8 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\Filament\Admin\Widgets')
-            ->widgets([
-                AccountWidget::class,
-            ])
+            ->widgets([])
+            ->navigationGroups(['Support', 'Payments', 'Billing', 'Platform'])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

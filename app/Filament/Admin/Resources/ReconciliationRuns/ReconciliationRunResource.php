@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\ReconciliationRuns;
 use App\Filament\Admin\Resources\ReconciliationRuns\Pages\ManageReconciliationRuns;
 use App\Models\ReconciliationRun;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -19,6 +20,8 @@ class ReconciliationRunResource extends Resource
     protected static ?string $model = ReconciliationRun::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedScale;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Payments';
 
     protected static ?string $navigationLabel = 'Reconciliation';
 

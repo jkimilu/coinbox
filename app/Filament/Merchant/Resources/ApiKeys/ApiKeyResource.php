@@ -7,6 +7,7 @@ use App\Filament\Merchant\Resources\ApiKeys\Pages\ManageApiKeys;
 use App\Models\ApiKey;
 use App\Models\AuditLog;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -25,6 +26,8 @@ class ApiKeyResource extends Resource
     protected static ?string $navigationLabel = 'API keys';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCommandLine;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Developers';
 
     protected static ?int $navigationSort = 4;
 

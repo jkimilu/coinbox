@@ -8,6 +8,7 @@ use App\Jobs\DeliverCallback;
 use App\Models\CallbackDelivery;
 use App\Models\CallbackEndpoint;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -35,6 +36,8 @@ class CallbackEndpointResource extends Resource
     protected static ?string $navigationLabel = 'Webhooks';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBellAlert;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Developers';
 
     protected static ?int $navigationSort = 2;
 

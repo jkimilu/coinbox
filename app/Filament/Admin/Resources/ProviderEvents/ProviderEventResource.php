@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\ProviderEvents\Pages\ListProviderEvents;
 use App\Jobs\ProcessProviderEvent;
 use App\Models\ProviderEvent;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
@@ -26,6 +27,8 @@ class ProviderEventResource extends Resource
     protected static ?string $navigationLabel = 'Events';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSignal;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Payments';
 
     protected static ?int $navigationSort = 3;
 

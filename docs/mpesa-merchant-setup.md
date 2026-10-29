@@ -51,7 +51,7 @@ To set this up, you give CoinBox a Daraja app for your shortcode. CoinBox then t
 
 ## Step 4: Connect the account in CoinBox
 
-1. Sign in to the CoinBox merchant portal → **M-Pesa accounts → Connect M-Pesa account**.
+1. Sign in to the CoinBox merchant portal → **Accounts → Connect M-Pesa account**.
 2. **Account**: choose PayBill or Till, give it a name, and enter the PayBill number or store (HO) number. For a Till, also enter the till number customers pay to.
 3. **Daraja credentials**: choose **Production**, then paste the production Consumer Key and Consumer Secret. CoinBox encrypts them and never shows them again.
 4. **Notifications**: pick which webhook endpoint should receive these payments, or leave it on *all endpoints*.
@@ -75,7 +75,7 @@ To see the exact URLs registered for you, open **Setup details** on the account.
 
 If different businesses, branches or systems share one PayBill, give each its own **account number**. Customers pay with Account **`<account number>#<reference>`**, for example **PayBill 4072129, Account `100#INV001`**.
 
-1. **M-Pesa accounts** → **Account numbers** on the PayBill.
+1. **Accounts** → **Account numbers** on the PayBill.
 2. Add each account number (e.g. `100` *Sokofiti*, `200` *Branch 2*) and choose the webhook it should notify. You can create a new webhook right there.
 3. Save.
 
@@ -88,7 +88,7 @@ Payments to an account number you haven't set up go to the PayBill's default web
 
 ## Step 5: Optional: payment validation
 
-By default Safaricom only sends **confirmations** (payment completed). If you want CoinBox to **reject** payments before they complete (for example, a PayBill payment with an empty account number, or below a minimum amount), ask Safaricom to **enable external validation** on your shortcode. Email **M-PESABusiness@safaricom.co.ke**. Then set the rules under **M-Pesa accounts → Edit**.
+By default Safaricom only sends **confirmations** (payment completed). If you want CoinBox to **reject** payments before they complete (for example, a PayBill payment with an empty account number, or below a minimum amount), ask Safaricom to **enable external validation** on your shortcode. Email **M-PESABusiness@safaricom.co.ke**. Then set the rules under **Accounts → Edit**.
 
 ## Step 6: Receive payments in your own system
 
@@ -114,6 +114,7 @@ Every payment is sent as a `POST` with JSON like this:
     "type": "payment",
     "provider": "mpesa",
     "payment_method": "paybill",
+    "short_code": "4072129",
     "provider_transaction_id": "QHX123ABC",
     "merchant_reference": "INV-2026-001",
     "amount": "2500.00",
@@ -141,7 +142,7 @@ const expected = crypto.createHmac('sha256', secret).update(`${t}.${rawBody}`).d
 if (!crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v1))) return res.sendStatus(400);
 ```
 
-Return HTTP 2xx quickly. If you don't, CoinBox retries with increasing delays (10s, 1m, 5m … up to 10 attempts). Every attempt is listed under **Webhook deliveries**, where you can retry a delivery by hand. Use `data.id` or `provider_transaction_id` to ignore duplicates.
+Return HTTP 2xx quickly. If you don't, CoinBox retries with increasing delays (10s, 1m, 5m … up to 10 attempts). Every attempt is listed under **Logs**, where you can retry a delivery by hand. Use `data.id` or `provider_transaction_id` to ignore duplicates.
 
 ### B. REST API (pull)
 

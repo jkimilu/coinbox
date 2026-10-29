@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'landing')->name('home');
 
+Route::post('/contact', [\App\Http\Controllers\ContactController::class, 'store'])
+    ->middleware('throttle:5,10')->name('contact.store');
+
 Route::get('/sitemap.xml', function () {
     $url = rtrim(config('app.url'), '/');
     $pages = [
@@ -29,3 +32,6 @@ Route::get('/robots.txt', fn () => response(implode("\n", [
     '',
     'Sitemap: '.rtrim(config('app.url'), '/').'/sitemap.xml',
 ]), 200, ['Content-Type' => 'text/plain']));
+
+// Passkey sign-in (spatie/laravel-passkeys): GET authentication-options, POST authenticate.
+Route::passkeys();

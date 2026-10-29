@@ -114,6 +114,7 @@
             <li><a href="#developers" class="hover:text-ink-900">Developers</a></li>
             <li><a href="#pricing" class="hover:text-ink-900">Pricing</a></li>
             <li><a href="#faq" class="hover:text-ink-900">FAQ</a></li>
+            <li><a href="#contact" class="hover:text-ink-900">Contact</a></li>
         </ul>
 
         <div class="hidden items-center gap-2 md:flex">
@@ -132,6 +133,7 @@
             <li><a href="#developers" class="block rounded-md px-2 py-2.5 hover:bg-ink-50">Developers</a></li>
             <li><a href="#pricing" class="block rounded-md px-2 py-2.5 hover:bg-ink-50">Pricing</a></li>
             <li><a href="#faq" class="block rounded-md px-2 py-2.5 hover:bg-ink-50">FAQ</a></li>
+            <li><a href="#contact" class="block rounded-md px-2 py-2.5 hover:bg-ink-50">Contact</a></li>
         </ul>
         <div class="mt-4 grid grid-cols-2 gap-3">
             <a href="{{ $login }}" class="rounded-full border border-ink-200 px-4 py-2.5 text-center font-semibold text-ink-800">Log in</a>
@@ -351,6 +353,7 @@
     <span class="text-sky-300">"id"</span>: <span class="text-brand-300">"txn_01JB8Q4W6R"</span>,
     <span class="text-sky-300">"provider"</span>: <span class="text-brand-300">"mpesa"</span>,
     <span class="text-sky-300">"payment_method"</span>: <span class="text-brand-300">"paybill"</span>,
+    <span class="text-sky-300">"short_code"</span>: <span class="text-brand-300">"4072129"</span>,
     <span class="text-sky-300">"provider_transaction_id"</span>: <span class="text-brand-300">"UJT41BX7QK"</span>,
     <span class="text-sky-300">"merchant_reference"</span>: <span class="text-brand-300">"INV-2041"</span>,
     <span class="text-sky-300">"amount"</span>: <span class="text-brand-300">"2500.00"</span>,
@@ -433,6 +436,82 @@
     </div>
 </section>
 
+{{-- ========== Contact ========== --}}
+@php
+    $support = config('coinbox.contact.support');
+    $sales = config('coinbox.contact.sales');
+    $errorsBag = $errors->getBag('contact');
+    $field = 'mt-1.5 block w-full rounded-xl border-0 bg-white px-4 py-3 text-[15px] text-ink-900 shadow-sm ring-1 ring-ink-200 placeholder:text-ink-400 focus:ring-2 focus:ring-brand-600 focus:outline-none';
+@endphp
+<section id="contact" class="scroll-mt-20 mx-auto max-w-6xl px-4 py-24 sm:px-6">
+    <div class="grid gap-12 lg:grid-cols-[0.85fr_1.15fr]">
+        <div>
+            <p class="text-sm font-semibold uppercase tracking-wider text-brand-700">Contact</p>
+            <h2 class="mt-4 font-display text-3xl font-bold tracking-tight text-ink-900 sm:text-[2.6rem] sm:leading-[1.1]">Talk to a person, not a bot.</h2>
+            <p class="mt-5 text-lg leading-relaxed text-ink-600">Questions about pricing, a large integration, or getting your PayBill connected? Send us a note and we’ll reply by email, usually within one business day.</p>
+
+            <dl class="mt-10 space-y-6">
+                <div class="flex gap-4">
+                    <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9 6 9-6M5 5h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"/></svg></span>
+                    <div><dt class="font-display font-bold text-ink-900">Sales</dt><dd class="text-ink-600">Pricing, onboarding several businesses, partnerships<br><a href="mailto:{{ $sales }}" class="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4 hover:decoration-brand-600">{{ $sales }}</a></dd></div>
+                </div>
+                <div class="flex gap-4">
+                    <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 ring-1 ring-brand-100"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10a6 6 0 10-12 0v4l-2 3h16l-2-3v-4zM10 20a2 2 0 004 0"/></svg></span>
+                    <div><dt class="font-display font-bold text-ink-900">Support</dt><dd class="text-ink-600">Already a merchant? Open a ticket under <span class="font-medium text-ink-800">Support</span> in your portal, or email<br><a href="mailto:{{ $support }}" class="font-semibold text-brand-700 underline decoration-brand-300 underline-offset-4 hover:decoration-brand-600">{{ $support }}</a></dd></div>
+                </div>
+            </dl>
+        </div>
+
+        <div class="rounded-3xl border border-ink-100 bg-white p-6 shadow-[0_24px_60px_-30px_rgb(20_27_22/0.35)] sm:p-9">
+            @if (session('contact_sent'))
+                <div role="status" class="flex h-full flex-col items-center justify-center py-10 text-center">
+                    <span class="grid size-14 place-items-center rounded-full bg-brand-600 text-white"><svg class="size-7" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 8.5l3.2 3L13 4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    <h3 class="mt-5 font-display text-2xl font-bold text-ink-900">Message sent</h3>
+                    <p class="mt-2 max-w-sm text-ink-600">Thanks. We’ve emailed you a copy{{ is_string(session('contact_sent')) ? ' with reference '.session('contact_sent') : '' }}. We’ll be in touch soon.</p>
+                    <a href="{{ url('/') }}#contact" class="mt-6 text-sm font-semibold text-brand-700 hover:underline">Send another message</a>
+                </div>
+            @else
+                <form method="POST" action="{{ route('contact.store') }}" class="grid gap-5 sm:grid-cols-2" novalidate>
+                    @csrf
+                    <div class="hidden" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+
+                    <fieldset class="sm:col-span-2">
+                        <legend class="text-sm font-medium text-ink-700">I’d like to talk to</legend>
+                        <div class="mt-2 grid grid-cols-2 gap-3">
+                            @foreach (['sales' => ['Sales', 'Pricing & onboarding'], 'support' => ['Support', 'Help with my account']] as $value => [$label, $hint])
+                                <label class="cursor-pointer rounded-xl p-3.5 ring-1 ring-ink-200 transition has-[:checked]:bg-brand-50 has-[:checked]:ring-2 has-[:checked]:ring-brand-600">
+                                    <input type="radio" name="topic" value="{{ $value }}" class="sr-only" @checked(old('topic', 'sales') === $value)>
+                                    <span class="block font-semibold text-ink-900">{{ $label }}</span>
+                                    <span class="block text-sm text-ink-500">{{ $hint }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+
+                    @foreach ([['name', 'Your name', 'text', 'name', true], ['email', 'Work email', 'email', 'email', true], ['phone', 'Phone (optional)', 'tel', 'tel', false], ['company', 'Business (optional)', 'text', 'organization', false]] as [$name, $label, $type, $ac, $req])
+                        <div>
+                            <label for="c-{{ $name }}" class="text-sm font-medium text-ink-700">{{ $label }}</label>
+                            <input id="c-{{ $name }}" name="{{ $name }}" type="{{ $type }}" autocomplete="{{ $ac }}" value="{{ old($name) }}" @if ($req) required @endif class="{{ $field }} @if ($errorsBag->has($name)) ring-red-500 @endif" @if ($errorsBag->has($name)) aria-invalid="true" aria-describedby="c-{{ $name }}-err" @endif>
+                            @if ($errorsBag->has($name))<p id="c-{{ $name }}-err" class="mt-1.5 text-sm text-red-600">{{ $errorsBag->first($name) }}</p>@endif
+                        </div>
+                    @endforeach
+
+                    <div class="sm:col-span-2">
+                        <label for="c-message" class="text-sm font-medium text-ink-700">How can we help?</label>
+                        <textarea id="c-message" name="message" rows="5" required class="{{ $field }} @if ($errorsBag->has('message')) ring-red-500 @endif" placeholder="Tell us about your business and what you need, e.g. how many PayBills or Tills you run.">{{ old('message') }}</textarea>
+                        @if ($errorsBag->has('message'))<p class="mt-1.5 text-sm text-red-600">{{ $errorsBag->first('message') }}</p>@endif
+                    </div>
+
+                    <div class="flex flex-col gap-3 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
+                        <p class="text-xs text-ink-500">We only use your details to reply to you.</p>
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-full bg-brand-600 px-7 py-3.5 font-semibold text-white transition hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">Send message</button>
+                    </div>
+                </form>
+            @endif
+        </div>
+    </div>
+</section>
+
 {{-- ========== Final CTA ========== --}}
 <section class="px-4 py-20 sm:px-6">
     <div class="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-brand-700 px-6 py-16 text-center sm:px-12 sm:py-20">
@@ -463,6 +542,9 @@
             <a href="#pricing" class="hover:text-ink-800">Pricing</a>
             <a href="#developers" class="hover:text-ink-800">API</a>
             <a href="#faq" class="hover:text-ink-800">FAQ</a>
+            <a href="#contact" class="hover:text-ink-800">Contact</a>
+            <a href="mailto:{{ config('coinbox.contact.support') }}" class="hover:text-ink-800">{{ config('coinbox.contact.support') }}</a>
+            <a href="mailto:{{ config('coinbox.contact.sales') }}" class="hover:text-ink-800">{{ config('coinbox.contact.sales') }}</a>
             <a href="{{ $login }}" class="hover:text-ink-800">Log in</a>
         </nav>
         <p>© {{ date('Y') }} CoinBox. M-Pesa is a trademark of Safaricom PLC.</p>

@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\PaymentAccounts\Pages\ListPaymentAccounts;
 use App\Filament\Merchant\Resources\PaymentAccounts\PaymentAccountResource as MerchantAccounts;
 use App\Models\PaymentAccount;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
@@ -25,6 +26,8 @@ class PaymentAccountResource extends Resource
     protected static ?string $navigationLabel = 'Accounts';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDevicePhoneMobile;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Payments';
 
     protected static ?int $navigationSort = 1;
 

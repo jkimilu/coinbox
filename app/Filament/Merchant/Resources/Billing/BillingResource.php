@@ -6,6 +6,7 @@ use App\Filament\Merchant\Concerns\ScopedToMerchant;
 use App\Filament\Merchant\Resources\Billing\Pages\ListBilling;
 use App\Models\BillingInvoice;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -31,6 +32,8 @@ class BillingResource extends Resource
     protected static ?string $breadcrumb = 'Billing';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Account';
 
     protected static ?int $navigationSort = 5;
 
@@ -86,10 +89,14 @@ class BillingResource extends Resource
             ->columns([
                 TextColumn::make('number')->weight('bold')->fontFamily('mono'),
                 TextColumn::make('period_start')->label('Period')->formatStateUsing(fn ($record) => $record->periodLabel()),
-                TextColumn::make('processed_volume')->label('Processed')->money('KES')->alignEnd(),
+                TextColumn::make('processed_volume')->label('Processed')->money('KES')->alignEnd()
+                    ->tooltip(fn (BillingInvoice $r) => number_format($r->payment_count).' payments × '.rtrim(rtrim((string) $r->fee_percent, '0'), '.').'% fee'),
                 TextColumn::make('amount')->label('Fee')->money('KES')->alignEnd(),
                 TextColumn::make('outstanding')->label('Outstanding')->state(fn (BillingInvoice $r) => $r->outstanding())->money('KES')->alignEnd(),
-                TextColumn::make('status')->state(fn (BillingInvoice $r) => $r->displayStatus())->badge()->color(fn ($state) => BillingInvoice::statusColor($state)),
+                TextColumn::make('status')->state(fn (BillingInvoice $r) => $r->displayStatus())->badge()->color(fn ($state) => BillingInvoice::statusColor($state))
+                    ->tooltip(fn (BillingInvoice $r) => $r->status === 'paid'
+                        ? 'Paid '.$r->paid_at?->setTimezone('Africa/Nairobi')->format('j M Y')
+                        : 'KES '.number_format($r->outstanding(), 2).' due '.$r->due_at->format('j M Y')."\nPayBill ".$r->payBill().', Account '.$r->paymentReference()),
                 TextColumn::make('due_at')->label('Due')->date('j M Y'),
                 TextColumn::make('pay_with')->label('Pay with')
                     ->state(fn (BillingInvoice $r) => $r->status === 'open' ? "PayBill {$r->payBill()} · Acc {$r->paymentReference()}" : '—')

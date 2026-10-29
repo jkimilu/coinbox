@@ -3,6 +3,7 @@
 namespace App\Filament\Merchant\Pages;
 
 use BackedEnum;
+use UnitEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\HtmlString;
@@ -15,9 +16,11 @@ class SetupGuide extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBookOpen;
 
-    protected static ?string $navigationLabel = 'M-Pesa setup guide';
+    protected static string|UnitEnum|null $navigationGroup = 'Account';
 
-    protected static ?string $title = 'M-Pesa setup guide';
+    protected static ?string $navigationLabel = 'Setup guide';
+
+    protected static ?string $title = 'Setup guide';
 
     protected static ?int $navigationSort = 10;
 

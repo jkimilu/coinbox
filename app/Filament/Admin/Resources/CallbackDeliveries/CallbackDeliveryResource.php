@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\CallbackDeliveries\Pages\ListCallbackDeliveries
 use App\Filament\Merchant\Resources\CallbackDeliveries\CallbackDeliveryResource as MerchantDeliveries;
 use App\Models\CallbackDelivery;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -23,6 +24,8 @@ class CallbackDeliveryResource extends Resource
     protected static ?string $navigationLabel = 'Webhooks';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInboxStack;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Payments';
 
     protected static ?int $navigationSort = 4;
 

@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\Merchants;
 use App\Filament\Admin\Resources\Merchants\Pages\ManageMerchants;
 use App\Models\Merchant;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -20,6 +21,8 @@ class MerchantResource extends Resource
     protected static ?string $model = Merchant::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Payments';
 
     protected static ?int $navigationSort = 0;
 

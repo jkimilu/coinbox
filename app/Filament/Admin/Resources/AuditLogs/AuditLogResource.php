@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\AuditLogs;
 use App\Filament\Admin\Resources\AuditLogs\Pages\ListAuditLogs;
 use App\Models\AuditLog;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -16,6 +17,8 @@ class AuditLogResource extends Resource
     protected static ?string $model = AuditLog::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Platform';
 
     protected static ?int $navigationSort = 8;
 

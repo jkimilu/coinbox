@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\PaymentProviders\Pages\ManagePaymentProviders;
 use App\Models\PaymentProvider;
 use App\Payments\Unintegrated\UnintegratedAdapter;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -29,6 +30,8 @@ class PaymentProviderResource extends Resource
     protected static ?string $navigationLabel = 'Providers';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPuzzlePiece;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Platform';
 
     protected static ?int $navigationSort = 7;
 

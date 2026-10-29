@@ -88,7 +88,8 @@ class MpesaFlowTest extends TestCase
             [$t, $v1] = array_map(fn ($p) => explode('=', $p, 2)[1], explode(',', $request->header('X-CoinBox-Signature')[0]));
 
             return hash_equals(hash_hmac('sha256', $t.'.'.$request->body(), $endpoint->secret), $v1)
-                && $request['data']['provider_transaction_id'] === 'QHX123ABC';
+                && $request['data']['provider_transaction_id'] === 'QHX123ABC'
+                && $request['data']['short_code'] === '899399';
         });
     }
 
@@ -144,7 +145,7 @@ class MpesaFlowTest extends TestCase
             ->assertJsonPath('all_time.net_recorded_collections', '2500.00');
 
         $this->getJson('/api/v1/transactions?type=payment', $h)->assertOk()->assertJsonCount(2, 'data');
-        $this->getJson('/api/v1/transactions/receipt/qhx123abc', $h)->assertOk()->assertJsonPath('amount', '2500.00');
+        $this->getJson('/api/v1/transactions/receipt/qhx123abc', $h)->assertOk()->assertJsonPath('amount', '2500.00')->assertJsonPath('short_code', '899399');
         $this->getJson('/api/v1/transactions/reference/INV-2026-001', $h)->assertOk()->assertJsonCount(3, 'data');
         $this->getJson('/api/v1/reports/collections?from=2026-10-01&to='.now()->addDay()->toDateString(), $h)->assertOk()
             ->assertJsonPath('totals.net_recorded_collections', '2500.00');

@@ -9,6 +9,7 @@ use App\Models\PaymentAccount;
 use App\Models\Transaction;
 use App\Payments\ReversalService;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
@@ -27,6 +28,8 @@ class TransactionResource extends Resource
     protected static ?string $model = Transaction::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Payments';
 
     protected static ?int $navigationSort = 2;
 
@@ -49,9 +52,11 @@ class TransactionResource extends Resource
                 TextColumn::make('provider_transaction_id')->label('Receipt')->searchable()->copyable(),
                 TextColumn::make('accountRoute.code')->label('Acc no.')->fontFamily('mono')->placeholder('—'),
                 TextColumn::make('merchant_reference')->label('Reference')->searchable(),
-                TextColumn::make('amount')->money('KES')->sortable()->alignEnd(),
+                TextColumn::make('amount')->money('KES')->sortable()->alignEnd()->weight('bold')
+                    ->tooltip(fn ($record) => MerchantTransactions::hoverSummary($record)),
                 TextColumn::make('type')->badge(),
-                TextColumn::make('status')->badge()->color(fn ($state) => MerchantTransactions::statusColor($state)),
+                TextColumn::make('status')->badge()->color(fn ($state) => MerchantTransactions::statusColor($state))
+                    ->tooltip(fn ($record) => MerchantTransactions::statusHint($record)),
                 TextColumn::make('paymentAccount.external_account_reference')->label('Shortcode'),
             ])
             ->filters([

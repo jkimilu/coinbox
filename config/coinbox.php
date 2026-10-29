@@ -1,6 +1,15 @@
 <?php
 
 return [
+    // Team mailboxes. Contact-form messages go to sales (or support); tickets go to support.
+    'contact' => [
+        'support' => env('COINBOX_SUPPORT_EMAIL', 'support@coinbox.co.ke'),
+        'sales' => env('COINBOX_SALES_EMAIL', 'sales@coinbox.co.ke'),
+        // true: send replies From support@/sales@ (your SMTP must allow it).
+        // false: send From MAIL_FROM_ADDRESS with Reply-To set to the team mailbox.
+        'send_as_mailbox' => (bool) env('COINBOX_SEND_AS_MAILBOX', false),
+    ],
+
     // Integrations an admin can attach to a provider. Add each new bank/card adapter here.
     'adapters' => [
         App\Payments\Mpesa\MpesaAdapter::class => 'M-Pesa C2B (Safaricom Daraja)',

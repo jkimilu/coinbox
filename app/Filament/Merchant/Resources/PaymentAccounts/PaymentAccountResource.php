@@ -10,6 +10,7 @@ use App\Payments\CollectionSummary;
 use App\Payments\Mpesa\DarajaClient;
 use App\Payments\Mpesa\MpesaAccountConnector;
 use BackedEnum;
+use UnitEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
@@ -39,11 +40,13 @@ class PaymentAccountResource extends Resource
 
     protected static ?string $model = PaymentAccount::class;
 
-    protected static ?string $modelLabel = 'M-Pesa account';
+    protected static ?string $modelLabel = 'account';
 
-    protected static ?string $navigationLabel = 'M-Pesa accounts';
+    protected static ?string $navigationLabel = 'Accounts';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDevicePhoneMobile;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Payments';
 
     protected static ?int $navigationSort = 1;
 
@@ -169,10 +172,19 @@ class PaymentAccountResource extends Resource
             ->columns([
                 TextColumn::make('display_name')->searchable()->weight('bold'),
                 TextColumn::make('account_type')->label('Type')->formatStateUsing(fn ($state) => $state === 'till' ? 'Till' : 'PayBill')->badge(),
-                TextColumn::make('external_account_reference')->label('Shortcode')->searchable(),
+                TextColumn::make('external_account_reference')->label('Shortcode')->searchable()->fontFamily('mono')
+                    ->tooltip(fn (PaymentAccount $r) => $r->account_type === 'till' ? 'Store (HO) number'.($r->config('till_number') ? ' · customers pay till '.$r->config('till_number') : '') : 'PayBill business number'),
                 TextColumn::make('credentials.environment')->label('Env')->badge()->color(fn ($state) => $state === 'sandbox' ? 'warning' : 'success'),
-                TextColumn::make('status')->badge()->color(fn ($state) => match ($state) { 'active' => 'success', 'pending' => 'warning', default => 'gray' }),
-                TextColumn::make('urls_registered_at')->label('URLs registered')->since()->placeholder('Not registered'),
+                TextColumn::make('status')->badge()
+                    ->icon(fn ($state) => match ($state) { 'active' => 'heroicon-m-check-circle', 'pending' => 'heroicon-m-clock', default => 'heroicon-m-pause-circle' })
+                    ->color(fn ($state) => match ($state) { 'active' => 'success', 'pending' => 'warning', default => 'gray' })
+                    ->tooltip(fn (PaymentAccount $r) => match ($r->status) {
+                        'active' => 'Receiving payment notifications.',
+                        'pending' => $r->urls_registered_at ? 'Registered. Waiting for the first payment.' : 'Not registered with Safaricom yet. Use “Register URLs with Safaricom”.',
+                        default => 'Disabled: notifications are ignored.',
+                    }),
+                TextColumn::make('urls_registered_at')->label('Registered')->since()->placeholder('Not registered')
+                    ->tooltip(fn (PaymentAccount $r) => $r->urls_registered_at?->setTimezone('Africa/Nairobi')->format('j M Y, H:i')),
                 TextColumn::make('routes_count')->counts('routes')->label('Account nos.'),
                 TextColumn::make('transactions_count')->counts('transactions')->label('Payments'),
             ])

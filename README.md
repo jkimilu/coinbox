@@ -64,6 +64,11 @@ Tests use the `coinbox_test` PostgreSQL database: `php artisan test`.
 - `coinbox:invoices` runs on the 1st (06:00 Nairobi) for the previous month. It issues `billing_invoices` (INV001, INV002… per merchant) and pays them from the float where possible. `coinbox:low-float` sends top-up reminders daily, at most one per merchant per week.
 - Merchants pay **PayBill 4072129**: Account `234` tops up the float, and Account `234#INV001` pays that invoice. Connect CoinBox's own PayBill as an account and select it under *Pricing* for automatic matching. Otherwise record payments in **admin → Billing → Float / Invoices**. Each receipt is only ever credited once.
 
+## Sign-in security
+
+- **MFA:** users turn it on under **Profile**. Two methods are available: an authenticator app (TOTP, with recovery codes) and a code sent by email. The authenticator secret and recovery codes are stored encrypted.
+- **Passkeys** (`spatie/laravel-passkeys`): users add them under **Profile → Passkeys**, then use **Sign in with a passkey** on either login screen. Passkeys are tied to the domain in `APP_URL`, so one created on the ngrok address won't work on another domain. The browser library is self-hosted at `public/js/simplewebauthn-browser.umd.min.js`.
+
 ## Production checklist
 
 - **Public HTTPS `APP_URL`** on port 443. Safaricom will not call `localhost`, plain HTTP or tunnel URLs in production. The domain itself must not contain `mpesa` or `safaricom`.

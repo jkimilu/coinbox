@@ -72,6 +72,7 @@ class Transaction extends Model
             'type' => $this->type,
             'provider' => $this->provider_code,
             'payment_method' => $this->payment_method,
+            'short_code' => $this->paymentAccount?->external_account_reference,
             'provider_transaction_id' => $this->provider_transaction_id,
             'account_code' => $this->accountRoute?->code,
             'merchant_reference' => $this->merchant_reference,

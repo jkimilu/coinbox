@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Support\Billing;
 use App\Support\Pricing;
 use BackedEnum;
+use UnitEnum;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -21,6 +22,8 @@ class PricingSettings extends Page
     protected string $view = 'filament.admin.pages.pricing-settings';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedReceiptPercent;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Platform';
 
     protected static ?string $navigationLabel = 'Pricing';
 

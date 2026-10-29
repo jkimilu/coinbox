@@ -7,13 +7,16 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
+use App\Filament\Merchant\Pages\Dashboard;
+use App\Filament\Shared\EditProfile;
+use App\Support\InitialsAvatarProvider;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
+use Filament\Auth\MultiFactor\Email\EmailAuthentication;
 use Filament\Panel;
 use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -32,17 +35,30 @@ class MerchantPanelProvider extends PanelProvider
             ->brandName('CoinBox')
             ->favicon('/favicon.svg')
             ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.favicons'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, fn () => view('filament.sidebar-user'))
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.auth.passkey-login'))
+            // "Back to home" at the bottom of each sign-in card
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.auth.back-home'))
+            ->renderHook(PanelsRenderHook::AUTH_REGISTER_FORM_AFTER, fn () => view('filament.auth.back-home'))
+            ->renderHook(PanelsRenderHook::AUTH_PASSWORD_RESET_REQUEST_FORM_AFTER, fn () => view('filament.auth.back-home'))
+            ->multiFactorAuthentication([
+                AppAuthentication::make()->recoverable(),
+                EmailAuthentication::make(),
+            ])
             ->maxContentWidth(Width::Full)
             ->sidebarWidth('18rem')
             ->brandLogo(fn () => view('filament.brand', ['label' => 'CoinBox']))
             ->brandLogoHeight('2rem')
+            ->viteTheme('resources/css/filament/merchant/theme.css')
+            ->font('Inter')
             ->login()
             ->registration(Register::class)
             ->passwordReset()
             ->emailVerification()
-            ->profile()
+            ->profile(EditProfile::class, isSimple: false)
             ->colors([
-                'primary' => Color::hex('#2CA01C'),
+                'primary' => \App\Support\BrandColors::primary(),
             ])
             ->discoverResources(in: app_path('Filament/Merchant/Resources'), for: 'App\Filament\Merchant\Resources')
             ->discoverPages(in: app_path('Filament/Merchant/Pages'), for: 'App\Filament\Merchant\Pages')
@@ -50,9 +66,8 @@ class MerchantPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Merchant/Widgets'), for: 'App\Filament\Merchant\Widgets')
-            ->widgets([
-                AccountWidget::class,
-            ])
+            ->widgets([])
+            ->navigationGroups(['Payments', 'Developers', 'Account'])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
