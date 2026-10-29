@@ -1,7 +1,7 @@
 <?php
 
 return [
-    // Team mailboxes. Contact-form messages go to sales (or support); tickets go to support.
+    // Team mailboxes . Contact-form messages go to sales (or support); tickets go to support.
     'contact' => [
         'support' => env('COINBOX_SUPPORT_EMAIL', 'support@coinbox.co.ke'),
         'sales' => env('COINBOX_SALES_EMAIL', 'sales@coinbox.co.ke'),
@@ -22,7 +22,8 @@ return [
 
         // Reject C2B callbacks that don't come from Safaricom's published IPs.
         'enforce_ip_allowlist' => env('MPESA_ENFORCE_IP_ALLOWLIST', false),
-        'allowed_ips' => array_filter(explode(',', env('MPESA_ALLOWED_IPS',
+        'allowed_ips' => array_filter(explode(',', env(
+            'MPESA_ALLOWED_IPS',
             '196.201.214.200,196.201.214.206,196.201.213.114,196.201.214.207,196.201.214.208,196.201.213.44,196.201.212.127,196.201.212.138,196.201.212.129,196.201.212.136,196.201.212.74,196.201.212.69'
         ))),
     ],
