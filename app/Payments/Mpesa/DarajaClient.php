@@ -97,6 +97,71 @@ class DarajaClient
         return $body;
     }
 
+    /** Shortcode used for STK push: config('stk_shortcode') (e.g. sandbox 174379) or the account's own. */
+    public function stkShortcode(PaymentAccount $account): string
+    {
+        return (string) ($account->config('stk_shortcode') ?: $account->external_account_reference);
+    }
+
+    protected function stkPassword(PaymentAccount $account, string $timestamp): string
+    {
+        $passkey = $account->credentials?->secret('passkey');
+        if (! $passkey) {
+            throw new ProviderException('This account has no Lipa na M-Pesa Online passkey, so it cannot send payment prompts.');
+        }
+
+        return base64_encode($this->stkShortcode($account).$passkey.$timestamp);
+    }
+
+    /**
+     * Send an M-Pesa PIN prompt to the customer's phone (Lipa na M-Pesa Online / STK push).
+     *
+     * @return array{MerchantRequestID: string, CheckoutRequestID: string, CustomerMessage?: string}
+     */
+    public function stkPush(PaymentAccount $account, string $phone, int $amount, string $reference, string $description, string $callbackUrl): array
+    {
+        $timestamp = now('Africa/Nairobi')->format('YmdHis');
+        $shortcode = $this->stkShortcode($account);
+        $isTill = $account->account_type === 'till';
+
+        $response = $this->request($account)->post('/mpesa/stkpush/v1/processrequest', [
+            'BusinessShortCode' => $shortcode,
+            'Password' => $this->stkPassword($account, $timestamp),
+            'Timestamp' => $timestamp,
+            'TransactionType' => $isTill ? 'CustomerBuyGoodsOnline' : 'CustomerPayBillOnline',
+            'Amount' => $amount,
+            'PartyA' => $phone,
+            'PartyB' => $isTill ? ($account->config('till_number') ?: $shortcode) : $shortcode,
+            'PhoneNumber' => $phone,
+            'CallBackURL' => $callbackUrl,
+            'AccountReference' => substr($reference, 0, 12),
+            'TransactionDesc' => substr($description, 0, 13),
+        ]);
+
+        $body = $response->json() ?? ['raw' => $response->body()];
+
+        if (! $response->successful() || (string) data_get($body, 'ResponseCode') !== '0') {
+            throw new ProviderException(data_get($body, 'errorMessage') ?? data_get($body, 'ResponseDescription') ?? 'M-Pesa could not send the prompt.');
+        }
+
+        return $body;
+    }
+
+    /** Ask Safaricom for the result of an STK push (used if the callback never arrives). */
+    public function stkQuery(PaymentAccount $account, string $checkoutRequestId): array
+    {
+        $timestamp = now('Africa/Nairobi')->format('YmdHis');
+
+        $response = $this->request($account)->post('/mpesa/stkpushquery/v1/query', [
+            'BusinessShortCode' => $this->stkShortcode($account),
+            'Password' => $this->stkPassword($account, $timestamp),
+            'Timestamp' => $timestamp,
+            'CheckoutRequestID' => $checkoutRequestId,
+        ]);
+
+        return $response->json() ?? ['raw' => $response->body()];
+    }
+
     /** Sandbox only: simulate a C2B payment so you can test end-to-end. */
     public function simulate(PaymentAccount $account, string $amount, string $billRef, string $msisdn = '254708374149'): array
     {

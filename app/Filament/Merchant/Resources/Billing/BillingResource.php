@@ -4,6 +4,7 @@ namespace App\Filament\Merchant\Resources\Billing;
 
 use App\Filament\Merchant\Concerns\ScopedToMerchant;
 use App\Filament\Merchant\Resources\Billing\Pages\ListBilling;
+use App\Filament\Merchant\Concerns\PaysWithMpesa;
 use App\Models\BillingInvoice;
 use BackedEnum;
 use UnitEnum;
@@ -104,7 +105,11 @@ class BillingResource extends Resource
             ])
             ->emptyStateHeading('No invoices yet')
             ->emptyStateDescription('Invoices are issued on the 1st of each month once you process more than the free allowance.')
-            ->recordActions([ViewAction::make()->label('Details')]);
+            ->recordActions([
+                PaysWithMpesa::makePayFromFloatAction('payFromFloat'),
+                PaysWithMpesa::makeMpesaAction('payInvoiceMpesa'),
+                ViewAction::make()->label('Details'),
+            ]);
     }
 
     public static function getPages(): array

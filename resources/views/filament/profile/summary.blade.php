@@ -24,6 +24,10 @@
                     </div>
                 @endif
                 <div class="flex items-center justify-between gap-3">
+                    <dt class="text-gray-500">Phone</dt>
+                    <dd class="cb-num font-medium text-gray-900 dark:text-white">{{ $phone ?: '—' }}</dd>
+                </div>
+                <div class="flex items-center justify-between gap-3">
                     <dt class="text-gray-500">Email</dt>
                     <dd>
                         @if ($user->hasVerifiedEmail())

@@ -21,22 +21,16 @@ class InvoiceIssued extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $i = $this->invoice->fresh(['merchant']);
-        $mail = (new MailMessage)
-            ->subject("CoinBox invoice {$i->number} for {$i->periodLabel()}")
-            ->greeting('Hello '.$notifiable->name)
-            ->line("Your CoinBox fee for {$i->periodLabel()} is **KES ".number_format((float) $i->amount, 2).'**, '
-                .rtrim(rtrim(number_format((float) $i->fee_percent, 3), '0'), '.')."% of KES ".number_format((float) $i->processed_volume, 2).' processed.');
+        $i = $this->invoice->exists ? $this->invoice->fresh(['merchant']) : $this->invoice;
 
-        if ($i->status === 'paid') {
-            return $mail->line('It has been paid in full from your float. No action is needed.')
-                ->action('View billing', url('/merchant/billing'));
-        }
-
-        return $mail
-            ->line('Amount due: **KES '.number_format($i->outstanding(), 2).'** by '.$i->due_at->format('j M Y').'.')
-            ->line("Pay via M-Pesa: **PayBill {$i->payBill()}**, Account **{$i->paymentReference()}**.")
-            ->line('Tip: keep a float with us (PayBill '.$i->payBill().', Account '.$i->merchant->account_number.') and future invoices are paid automatically.')
-            ->action('View billing', url('/merchant/billing'));
+        return (new MailMessage)
+            ->subject("CoinBox invoice {$i->number} for {$i->periodLabel()}".($i->status === 'paid' ? ' (paid from float)' : ''))
+            ->markdown('mail.billing.invoice', [
+                'i' => $i,
+                'first' => str($notifiable->name)->before(' ')->toString(),
+                'rate' => rtrim(rtrim(number_format((float) $i->fee_percent, 3), '0'), '.'),
+                'balance' => $i->merchant->floatBalance(),
+                'url' => url('/merchant/billing'),
+            ]);
     }
 }

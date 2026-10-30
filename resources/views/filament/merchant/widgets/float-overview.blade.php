@@ -32,8 +32,21 @@
                 <tr><td style="color:var(--gray-500);padding:.2rem 1.25rem .2rem 0">Account</td><td style="{{ $mono }}font-size:1.1rem">{{ $merchant->account_number }}</td></tr>
             </table>
             <p style="{{ $muted }}margin-top:.75rem;font-size:.8rem">To pay a specific invoice, use Account <span style="{{ $mono }}">{{ $merchant->account_number }}#INV001</span> with your invoice number.</p>
+            <div class="mt-4 flex flex-wrap gap-2">
+                {{ $this->payWithMpesaAction }}
+            </div>
+            @unless ($stkAvailable)
+                <p style="{{ $muted }}margin-top:.5rem;font-size:.75rem">M-Pesa prompts aren’t switched on yet. Pay via PayBill above.</p>
+            @endunless
         </x-filament::section>
     </div>
+
+    @if ($pending)
+        <div wire:poll.4s="checkPendingStk" role="status" class="mt-4 flex items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 p-4 text-sm text-primary-900 dark:border-primary-400/30 dark:bg-primary-400/10 dark:text-primary-100">
+            <x-filament::loading-indicator class="size-5 text-primary-600" />
+            <span><strong>Check your phone.</strong> {{ $pendingMessage }}</span>
+        </div>
+    @endif
 
     @if ($needsTopUp)
         <div style="margin-top:1rem;border-radius:.75rem;border:1px solid var(--warning-300);background:color-mix(in oklab,var(--warning-50) 85%,transparent);padding:1rem;font-size:.875rem;color:var(--warning-800)">
@@ -47,4 +60,5 @@
             Your float covers your expected fees. Nothing to do.
         </div>
     @endif
+    <x-filament-actions::modals />
 </x-filament-widgets::widget>

@@ -110,6 +110,12 @@ return [
     |
     */
 
+    // Branded email theme: resources/views/vendor/mail/html/themes/coinbox.css
+    'markdown' => [
+        'theme' => env('MAIL_MARKDOWN_THEME', 'coinbox'),
+        'paths' => [resource_path('views/vendor/mail')],
+    ],
+
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),

@@ -14,6 +14,10 @@ Route::prefix('c2b/{routeKey}')->middleware('throttle:provider')->group(function
     Route::post('validation', [MpesaC2bController::class, 'validation'])->name('provider.c2b.validation');
 });
 
+// STK push (PIN prompt) results from Safaricom
+Route::post('stk/{token}', \App\Http\Controllers\Provider\StkCallbackController::class)
+    ->middleware('throttle:provider')->name('provider.stk.callback');
+
 // Merchant REST API
 Route::prefix('v1')->middleware('throttle:merchant-api')->group(function () {
     Route::get('me', [MerchantController::class, 'me'])->middleware(AuthenticateApiKey::class);

@@ -72,7 +72,7 @@ class PricingSettings extends Page
                         Select::make('platform_account_id')->label('Connected account receiving these payments')
                             ->options(fn () => PaymentAccount::query()->with('merchant')->get()->mapWithKeys(fn ($a) => [$a->id => "{$a->external_account_reference} · {$a->display_name} ({$a->merchant?->name})"]))
                             ->placeholder('Not connected: record payments manually')
-                            ->helperText('Connect the CoinBox PayBill as an account, then pick it so payments are matched automatically.'),
+                            ->helperText('Connect the CoinBox PayBill as an account and pick it here so payments are matched automatically. Add its Lipa na M-Pesa passkey to let merchants top up by M-Pesa prompt.'),
                         TextInput::make('due_days')->label('Invoice due after')->numeric()->integer()->minValue(0)->maxValue(90)->suffix('days')->required(),
                     ]),
             ]);

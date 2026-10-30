@@ -1,6 +1,8 @@
 <x-mail::message>
+@unless (preg_match('/^\s*(hi|hello|hey|dear|habari|jambo|good (morning|afternoon|evening))\b/i', $reply->body))
 Hi {{ str($ticket->requester_name)->before(' ') }},
 
+@endunless
 {!! nl2br(e($reply->body)) !!}
 
 {{ $reply->author_name }}<br>

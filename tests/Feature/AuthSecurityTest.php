@@ -66,4 +66,21 @@ class AuthSecurityTest extends TestCase
         $this->assertSame('JBSWY3DPEHPK3PXP', $user->fresh()->getAppAuthenticationSecret());
         $this->assertSame(['code-1', 'code-2'], $user->fresh()->getAppAuthenticationRecoveryCodes());
     }
+
+    public function test_profile_phone_edits_merchant_registered_phone(): void
+    {
+        $merchant = Merchant::create(['name' => 'M', 'email' => 'm@example.com', 'phone' => '254712345678', 'status' => 'active']);
+        $user = User::factory()->create(['merchant_id' => $merchant->id, 'email_verified_at' => now()]);
+        $this->actingAs($user);
+        Filament::setCurrentPanel('merchant');
+
+        $this->get('/merchant/profile')->assertOk()->assertSee('Business phone')->assertSee('0712 345 678');
+
+        Livewire::test(\App\Filament\Shared\EditProfile::class)
+            ->assertSet('data.phone', '0712345678')
+            ->set('data.phone', '0812')->call('save')->assertHasErrors(['data.phone'])
+            ->set('data.phone', '+254 722 000 111')->call('save')->assertHasNoErrors();
+
+        $this->assertSame('254722000111', $merchant->fresh()->phone);
+    }
 }

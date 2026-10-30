@@ -15,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // CoinBox wording for Filament's sign-in emails (verification + password reset).
+        $this->app->bind(\Filament\Auth\Notifications\VerifyEmail::class, \App\Notifications\Auth\VerifyEmail::class);
+        $this->app->bind(\Filament\Auth\Notifications\ResetPassword::class, \App\Notifications\Auth\ResetPassword::class);
     }
 
     /**
