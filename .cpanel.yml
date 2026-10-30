@@ -1,0 +1,7 @@
+---
+# Used by cPanel → Git Version Control → "Deploy HEAD Commit".
+# Copies compiled assets into the web root and refreshes the app.
+deployment:
+  tasks:
+    - export PUBLIC_DIR=$HOME/public_html/coinbox
+    - /bin/bash scripts/deploy.sh
