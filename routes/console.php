@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Schedule;
 
+// Shared hosting (cPanel) has no Supervisor: the cron that runs schedule:run also works the queue,
+// so C2B payments and webhooks are processed within about a minute.
+Schedule::command('queue:work --stop-when-empty --max-time=55 --tries=5')->everyMinute()->withoutOverlapping(5)->runInBackground();
+
 Schedule::command('coinbox:sweep')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('queue:prune-failed --hours=720')->daily();
 

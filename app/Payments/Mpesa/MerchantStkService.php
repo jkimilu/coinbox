@@ -93,11 +93,9 @@ class MerchantStkService
     {
         // Paid, but the C2B confirmation was still being processed when the callback came in.
         if ($stk->status === 'succeeded' && $stk->mpesa_receipt && ! $stk->transaction_id) {
-            $txn = Transaction::query()->where('payment_account_id', $stk->payment_account_id)
-                ->where('provider_transaction_id', $stk->mpesa_receipt)->where('type', Transaction::TYPE_PAYMENT)->first();
-            $txn && $stk->update(['transaction_id' => $txn->id]);
+            $this->linkTransaction($stk);
 
-            return $stk;
+            return $stk->fresh();
         }
 
         if (! $stk->isPending() || ! $stk->checkout_request_id || $stk->created_at->gt(now()->subSeconds(20))) {
@@ -179,16 +177,45 @@ class MerchantStkService
             ]));
             $this->ingestor->process($event);
         } catch (UniqueConstraintViolationException) {
-            // Safaricom's C2B confirmation for this receipt got here first.
+            // Safaricom's C2B confirmation for this receipt got here first; linkTransaction records it.
         }
 
-        $txn = Transaction::query()
-            ->where('payment_account_id', $account->id)
+        $this->linkTransaction($stk);
+    }
+
+    /**
+     * Point the prompt at its transaction. If the C2B confirmation is stored but still waiting
+     * in the queue, record it now so the payment shows up immediately.
+     */
+    protected function linkTransaction(StkRequest $stk): void
+    {
+        $find = fn () => Transaction::query()
+            ->where('payment_account_id', $stk->payment_account_id)
             ->where('provider_transaction_id', $stk->mpesa_receipt)
             ->where('type', Transaction::TYPE_PAYMENT)
             ->first();
 
-        $stk->update(['transaction_id' => $txn?->id]);
+        $txn = $find();
+
+        if (! $txn) {
+            $event = ProviderEvent::query()
+                ->where('payment_account_id', $stk->payment_account_id)
+                ->where('event_type', 'c2b.confirmation')
+                ->where('idempotency_key', $stk->mpesa_receipt)
+                ->whereIn('processing_status', ['received', 'failed'])
+                ->first();
+
+            if ($event) {
+                try {
+                    $this->ingestor->process($event);
+                } catch (Throwable) {
+                    // Left for the queued job to retry.
+                }
+                $txn = $find();
+            }
+        }
+
+        $txn && $stk->update(['transaction_id' => $txn->id]);
     }
 
     /** Plain-language result for the merchant. */

@@ -118,14 +118,23 @@ trait RequestsPayments
 
         $stk = app(MerchantStkService::class)->refresh($stk);
 
-        if (! $stk->isPending()) {
-            $this->pendingCollectionId = null;
-            Notification::make()
-                ->title($stk->status === 'succeeded' ? 'Payment received' : 'Payment not completed')
-                ->body(MerchantStkService::message($stk))
-                ->status($stk->status === 'succeeded' ? 'success' : 'warning')
-                ->send();
+        if ($stk->isPending()) {
+            return;
         }
+
+        // Paid, but not in the transactions list yet: keep checking for up to 2 minutes.
+        if ($stk->status === 'succeeded' && ! $stk->transaction_id && $stk->completed_at?->gt(now()->subMinutes(2))) {
+            return;
+        }
+
+        $this->pendingCollectionId = null;
+        $this->flushCachedTableRecords();
+
+        Notification::make()
+            ->title($stk->status === 'succeeded' ? 'Payment received' : 'Payment not completed')
+            ->body(MerchantStkService::message($stk))
+            ->status($stk->status === 'succeeded' ? 'success' : 'warning')
+            ->send();
     }
 
     public function pendingCollection(): ?StkRequest
