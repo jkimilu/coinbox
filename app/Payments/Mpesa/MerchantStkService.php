@@ -53,6 +53,7 @@ class MerchantStkService
             'payment_account_id' => $account->id,
             'api_key_id' => $key?->id,
             'purpose' => StkRequest::PURPOSE_COLLECTION,
+            'status' => 'pending',
             'phone' => $phone,
             'amount' => $amount,
             'account_reference' => $reference,

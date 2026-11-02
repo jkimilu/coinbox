@@ -54,7 +54,7 @@ class MerchantStkApiTest extends TestCase
         ]);
     }
 
-    protected function callback(StkRequest $stk, int $code, string $receipt = 'TKC1STK001'): void
+    protected function sendCallback(StkRequest $stk, int $code, string $receipt = 'TKC1STK001'): void
     {
         $this->postJson('/api/stk/'.$stk->callback_token, ['Body' => ['stkCallback' => array_filter([
             'MerchantRequestID' => 'M1', 'CheckoutRequestID' => 'ws_CO_9', 'ResultCode' => $code, 'ResultDesc' => $code ? 'Request cancelled by user' : 'Processed',
@@ -78,7 +78,7 @@ class MerchantStkApiTest extends TestCase
         $this->assertSame('stk_'.$stk->id, $res->json('id'));
         $this->assertSame('collection', $stk->purpose);
 
-        $this->callback($stk, 0);
+        $this->sendCallback($stk, 0);
 
         $txn = Transaction::sole();
         $this->assertSame('TKC1STK001', $txn->provider_transaction_id);
@@ -93,7 +93,7 @@ class MerchantStkApiTest extends TestCase
     public function test_c2b_confirmation_for_same_receipt_is_not_double_counted(): void
     {
         $this->push()->assertStatus(202);
-        $this->callback(StkRequest::sole(), 0);
+        $this->sendCallback(StkRequest::sole(), 0);
 
         $this->postJson('/api/c2b/'.$this->account->route_key.'/confirmation', [
             'TransactionType' => 'Pay Bill', 'TransID' => 'TKC1STK001', 'TransTime' => '20261103101500',
@@ -107,7 +107,7 @@ class MerchantStkApiTest extends TestCase
     {
         $this->push()->assertStatus(202);
         $stk = StkRequest::sole();
-        $this->callback($stk, 1032);
+        $this->sendCallback($stk, 1032);
 
         $this->assertSame('cancelled', $stk->fresh()->status);
         $this->assertSame(0, Transaction::count());
