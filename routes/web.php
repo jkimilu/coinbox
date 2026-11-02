@@ -35,3 +35,10 @@ Route::get('/robots.txt', fn () => response(implode("\n", [
 
 // Passkey sign-in (spatie/laravel-passkeys): GET authentication-options, POST authenticate.
 Route::passkeys();
+
+// Unsubscribe link in the daily collections email (signed, so no login needed).
+Route::middleware('signed')->group(function () {
+    Route::get('/reports/daily/unsubscribe/{user}', [\App\Http\Controllers\DailyReportUnsubscribeController::class, 'show'])->name('reports.daily.unsubscribe');
+    Route::post('/reports/daily/unsubscribe/{user}', [\App\Http\Controllers\DailyReportUnsubscribeController::class, 'store'])
+        ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+});
