@@ -122,8 +122,9 @@ trait RequestsPayments
             return;
         }
 
-        // Paid, but not in the transactions list yet: keep checking for up to 2 minutes.
-        if ($stk->status === 'succeeded' && ! $stk->transaction_id && $stk->completed_at?->gt(now()->subMinutes(2))) {
+        // Paid, but not in the transactions list yet: keep checking for up to a minute.
+        if ($stk->status === 'succeeded' && ! $stk->transaction_id && $stk->completed_at && $stk->completed_at->gt(now()->subMinute())
+            && $stk->created_at->gt(now()->subMinutes(4))) {
             return;
         }
 

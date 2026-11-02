@@ -93,7 +93,7 @@ class MerchantStkService
     public function refresh(StkRequest $stk): StkRequest
     {
         // Paid, but the C2B confirmation was still being processed when the callback came in.
-        if ($stk->status === 'succeeded' && $stk->mpesa_receipt && ! $stk->transaction_id) {
+        if ($stk->status === 'succeeded' && ! $stk->transaction_id) {
             $this->linkTransaction($stk);
 
             return $stk->fresh();
@@ -190,39 +190,76 @@ class MerchantStkService
      */
     protected function linkTransaction(StkRequest $stk): void
     {
+        $txn = $stk->mpesa_receipt ? $this->transactionByReceipt($stk) : $this->transactionByMatch($stk);
+
+        $txn && $stk->update(['transaction_id' => $txn->id, 'mpesa_receipt' => $stk->mpesa_receipt ?: $txn->provider_transaction_id]);
+    }
+
+    protected function transactionByReceipt(StkRequest $stk): ?Transaction
+    {
         $find = fn () => Transaction::query()
             ->where('payment_account_id', $stk->payment_account_id)
             ->where('provider_transaction_id', $stk->mpesa_receipt)
             ->where('type', Transaction::TYPE_PAYMENT)
             ->first();
 
-        $txn = $find();
-
-        if (! $txn) {
-            $event = ProviderEvent::query()
-                ->where('payment_account_id', $stk->payment_account_id)
-                ->where('event_type', 'c2b.confirmation')
-                ->where('idempotency_key', $stk->mpesa_receipt)
-                ->whereIn('processing_status', ['received', 'failed'])
-                ->first();
-
-            if ($event) {
-                try {
-                    $this->ingestor->process($event);
-                } catch (Throwable) {
-                    // Left for the queued job to retry.
-                }
-                $txn = $find();
-            }
+        if ($txn = $find()) {
+            return $txn;
         }
 
-        $txn && $stk->update(['transaction_id' => $txn->id]);
+        $this->processWaitingConfirmations($stk, fn ($q) => $q->where('idempotency_key', $stk->mpesa_receipt));
+
+        return $find();
+    }
+
+    /**
+     * No receipt (success came from a status query and Safaricom's callback never arrived):
+     * match the C2B payment by account, amount, account number and time.
+     */
+    protected function transactionByMatch(StkRequest $stk): ?Transaction
+    {
+        $since = $stk->created_at->copy()->subMinute();
+        $this->processWaitingConfirmations($stk, fn ($q) => $q->where('created_at', '>=', $since));
+
+        $linked = StkRequest::query()->whereNotNull('transaction_id')->select('transaction_id');
+        $isPaybill = $stk->paymentAccount?->account_type !== 'till';
+
+        return Transaction::query()
+            ->where('payment_account_id', $stk->payment_account_id)
+            ->where('type', Transaction::TYPE_PAYMENT)
+            ->where('amount', $stk->amount)
+            ->where('created_at', '>=', $since)
+            ->whereNotIn('id', $linked)
+            ->when($isPaybill, fn ($q) => $q->where('metadata->bill_ref_number', $stk->account_reference))
+            ->orderBy('created_at')
+            ->first();
+    }
+
+    /** Record C2B confirmations that are stored but still waiting for the queue. */
+    protected function processWaitingConfirmations(StkRequest $stk, callable $scope): void
+    {
+        $events = ProviderEvent::query()
+            ->where('payment_account_id', $stk->payment_account_id)
+            ->where('event_type', 'c2b.confirmation')
+            ->whereIn('processing_status', ['received', 'failed'])
+            ->tap($scope)
+            ->limit(20)
+            ->get();
+
+        foreach ($events as $event) {
+            try {
+                $this->ingestor->process($event);
+            } catch (Throwable) {
+                // Left for the queued job to retry.
+            }
+        }
     }
 
     /** Plain-language result for the merchant. */
     public static function message(StkRequest $stk): string
     {
         return match (true) {
+            $stk->status === 'succeeded' && ! $stk->transaction_id => 'M-Pesa confirmed KES '.number_format($stk->amount).' from '.$stk->maskedPhone().'. It will appear in your transactions as soon as Safaricom sends the receipt.',
             $stk->status === 'succeeded' => 'KES '.number_format($stk->amount).' received from '.$stk->maskedPhone().($stk->mpesa_receipt ? ' · receipt '.$stk->mpesa_receipt : '').'.',
             $stk->status === 'cancelled' => 'The customer cancelled the prompt.',
             $stk->status === 'timeout' || $stk->result_code === '1037' => 'The customer’s phone didn’t respond in time. Check it is on and has signal, then try again.',

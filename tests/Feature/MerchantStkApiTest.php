@@ -164,4 +164,35 @@ class MerchantStkApiTest extends TestCase
         $this->assertSame('100#INV001', StkRequest::sole()->account_reference);
         Http::assertSent(fn ($r) => str_ends_with($r->url(), '/stkpush/v1/processrequest') && $r['AccountReference'] === '100#INV001');
     }
+
+    public function test_success_from_status_query_is_matched_to_the_c2b_payment(): void
+    {
+        Queue::fake([DeliverCallback::class, \App\Jobs\ProcessProviderEvent::class]); // no queue worker running
+        Http::fake([
+            'sandbox.safaricom.co.ke/oauth/*' => Http::response(['access_token' => 'tok']),
+            'sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest' => Http::response(['MerchantRequestID' => 'M1', 'CheckoutRequestID' => 'ws_CO_9', 'ResponseCode' => '0']),
+            'sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query' => Http::response(['ResultCode' => '0', 'ResultDesc' => 'The service request is processed successfully.']),
+        ]);
+
+        $this->push()->assertStatus(202);
+        $stk = StkRequest::sole();
+        $this->travel(30)->seconds();
+
+        // Safaricom's STK callback never arrives; the status query says it succeeded (no receipt).
+        $stk = app(\App\Payments\Mpesa\MerchantStkService::class)->refresh($stk);
+        $this->assertSame('succeeded', $stk->status);
+        $this->assertNull($stk->transaction_id);
+
+        // The normal C2B confirmation arrives and waits in the queue.
+        $this->postJson('/api/c2b/'.$this->account->route_key.'/confirmation', [
+            'TransactionType' => 'Pay Bill', 'TransID' => 'TKC1Q00001', 'TransTime' => now('Africa/Nairobi')->format('YmdHis'),
+            'TransAmount' => '250.00', 'BusinessShortCode' => '600984', 'BillRefNumber' => 'INV001', 'MSISDN' => 'abc123hash',
+        ])->assertOk();
+        $this->assertSame(0, Transaction::count());
+
+        $stk = app(\App\Payments\Mpesa\MerchantStkService::class)->refresh($stk);
+        $txn = Transaction::sole();
+        $this->assertSame($txn->id, $stk->transaction_id);
+        $this->assertSame('TKC1Q00001', $stk->mpesa_receipt);
+    }
 }
