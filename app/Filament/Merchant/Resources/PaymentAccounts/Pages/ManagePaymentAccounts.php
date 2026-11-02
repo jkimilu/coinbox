@@ -31,7 +31,7 @@ class ManagePaymentAccounts extends ManageRecords
             CreateAction::make()
                 ->label('Connect M-Pesa account')
                 ->icon(Heroicon::OutlinedPlus)
-                ->modalWidth('2xl')
+                ->modalWidth('4xl')
                 ->steps([
                     Step::make('Account')
                         ->description('Your PayBill or Till')
