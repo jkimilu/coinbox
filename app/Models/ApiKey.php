@@ -15,7 +15,11 @@ class ApiKey extends Model
         'accounts:read' => 'Read payment accounts and collection summaries',
         'transactions:read' => 'Read transactions',
         'reports:read' => 'Read collection reports',
+        'payments:create' => 'Send M-Pesa payment prompts (STK push) to customers',
     ];
+
+    /** Abilities a key only has when ticked explicitly (a key with no abilities ticked is read-only). */
+    public const EXPLICIT_ABILITIES = ['payments:create'];
 
     protected $fillable = ['merchant_id', 'name', 'abilities', 'expires_at'];
 
@@ -72,6 +76,10 @@ class ApiKey extends Model
 
     public function allows(string $ability): bool
     {
+        if (in_array($ability, self::EXPLICIT_ABILITIES, true)) {
+            return in_array($ability, $this->abilities ?? [], true);
+        }
+
         return empty($this->abilities) || in_array($ability, $this->abilities, true);
     }
 }

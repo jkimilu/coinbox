@@ -19,6 +19,7 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -86,6 +87,10 @@ class PaymentAccountResource extends Resource
                 ->helperText($required ? null : 'Leave blank to keep the current value.'),
             TextInput::make('passkey')->label('Lipa na M-Pesa Online passkey (optional)')->password()->revealable()
                 ->helperText('Not needed for receiving C2B payments. Stored for future STK push support.'),
+            TextInput::make('initiator_name')->label('API operator (initiator) username (optional)')
+                ->helperText('Only needed to reverse payments from CoinBox. Create an API operator with the reversal role on the M-Pesa Business portal.'),
+            Textarea::make('security_credential')->label('Security credential (optional)')->rows(3)
+                ->helperText('The API operator\'s password, encrypted with Safaricom\'s certificate. Generate it on the Daraja portal and paste it here. Leave blank to keep the current value.'),
         ];
     }
 

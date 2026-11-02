@@ -86,7 +86,8 @@ class StkTopUpService
     public function handleCallback(string $token, array $payload): ?StkRequest
     {
         $cb = data_get($payload, 'Body.stkCallback');
-        $stk = StkRequest::query()->where('callback_token', $token)->first();
+        // Never treat a merchant's own collection prompt as a CoinBox float top-up.
+        $stk = StkRequest::query()->where('callback_token', $token)->where('purpose', '!=', StkRequest::PURPOSE_COLLECTION)->first();
 
         if (! $stk || ! $cb || ($stk->checkout_request_id && $stk->checkout_request_id !== ($cb['CheckoutRequestID'] ?? null))) {
             return null;

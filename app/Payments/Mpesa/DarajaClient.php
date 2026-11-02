@@ -162,6 +162,45 @@ class DarajaClient
         return $response->json() ?? ['raw' => $response->body()];
     }
 
+    /**
+     * Ask Safaricom to reverse a C2B payment (Daraja Reversal API). Safaricom accepts the request
+     * here and sends the outcome later to $resultUrl (or $timeoutUrl if it gives up).
+     *
+     * @return array{ConversationID?: string, OriginatorConversationID?: string, ResponseCode?: string}
+     */
+    public function reverse(PaymentAccount $account, string $receipt, string $amount, string $remarks, string $resultUrl, string $timeoutUrl): array
+    {
+        $initiator = $account->credentials?->secret('initiator_name');
+        $credential = $account->credentials?->secret('security_credential');
+
+        if (! $initiator || ! $credential) {
+            throw new ProviderException('Reversals need an API operator (initiator) name and security credential. Add them under Payment accounts → Update Daraja credentials.');
+        }
+
+        $response = $this->request($account)->post('/mpesa/reversal/v1/request', [
+            'Initiator' => $initiator,
+            'SecurityCredential' => $credential,
+            'CommandID' => 'TransactionReversal',
+            'TransactionID' => $receipt,
+            // Whole shillings only; C2B payments are whole numbers anyway.
+            'Amount' => (string) (int) round((float) $amount),
+            'ReceiverParty' => $account->external_account_reference,
+            'RecieverIdentifierType' => '11', // Daraja's spelling; 11 = organisation shortcode
+            'ResultURL' => $resultUrl,
+            'QueueTimeOutURL' => $timeoutUrl,
+            'Remarks' => substr($remarks, 0, 100) ?: 'Reversal',
+            'Occasion' => '',
+        ]);
+
+        $body = $response->json() ?? ['raw' => $response->body()];
+
+        if (! $response->successful() || (string) data_get($body, 'ResponseCode') !== '0') {
+            throw new ProviderException('Safaricom did not accept the reversal: '.(data_get($body, 'errorMessage') ?? data_get($body, 'ResponseDescription') ?? json_encode($body)));
+        }
+
+        return $body;
+    }
+
     /** Sandbox only: simulate a C2B payment so you can test end-to-end. */
     public function simulate(PaymentAccount $account, string $amount, string $billRef, string $msisdn = '254708374149'): array
     {

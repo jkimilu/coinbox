@@ -18,6 +18,12 @@ Route::prefix('c2b/{routeKey}')->middleware('throttle:provider')->group(function
 Route::post('stk/{token}', \App\Http\Controllers\Provider\StkCallbackController::class)
     ->middleware('throttle:provider')->name('provider.stk.callback');
 
+// Reversal results from Safaricom
+Route::prefix('rv/{token}')->middleware('throttle:provider')->group(function () {
+    Route::post('result', [\App\Http\Controllers\Provider\ReversalCallbackController::class, 'result'])->name('provider.reversal.result');
+    Route::post('timeout', [\App\Http\Controllers\Provider\ReversalCallbackController::class, 'timeout'])->name('provider.reversal.timeout');
+});
+
 // Merchant REST API
 Route::prefix('v1')->middleware('throttle:merchant-api')->group(function () {
     Route::get('me', [MerchantController::class, 'me'])->middleware(AuthenticateApiKey::class);
@@ -33,6 +39,11 @@ Route::prefix('v1')->middleware('throttle:merchant-api')->group(function () {
         Route::get('transactions/receipt/{receipt}', [TransactionController::class, 'byReceipt']);
         Route::get('transactions/{id}', [TransactionController::class, 'show']);
     });
+
+    Route::post('stk', [\App\Http\Controllers\Api\V1\StkController::class, 'store'])
+        ->middleware([AuthenticateApiKey::class.':payments:create', 'throttle:merchant-stk']);
+    Route::get('stk/{id}', [\App\Http\Controllers\Api\V1\StkController::class, 'show'])
+        ->middleware(AuthenticateApiKey::class.':payments:create');
 
     Route::get('reports/collections', [ReportController::class, 'collections'])
         ->middleware(AuthenticateApiKey::class.':reports:read');

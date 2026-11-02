@@ -71,7 +71,8 @@ class TransactionResource extends Resource
             ])
             ->recordActions([
                 ViewAction::make(),
-                Action::make('reversal')->label('Record reversal')->icon(Heroicon::OutlinedArrowUturnLeft)->color('danger')
+                MerchantTransactions::reverseAction(),
+                Action::make('reversal')->label('Record manual reversal')->icon(Heroicon::OutlinedArrowUturnLeft)->color('danger')
                     ->visible(fn (Transaction $r) => $r->type === 'payment' && $r->status === 'succeeded')
                     ->modalDescription('Record a reversal that has already been completed at Safaricom. The original payment stays in the history.')
                     ->schema([

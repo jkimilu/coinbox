@@ -25,6 +25,32 @@ class StkRequest extends Model
 
     public function merchant(): BelongsTo { return $this->belongsTo(Merchant::class); }
     public function paymentAccount(): BelongsTo { return $this->belongsTo(PaymentAccount::class); }
+    public function transaction(): BelongsTo { return $this->belongsTo(Transaction::class); }
+
+    public const PURPOSE_COLLECTION = 'collection';
+
+    /** Merchant API representation of a prompt sent with POST /v1/stk. */
+    public function toApiArray(): array
+    {
+        return [
+            'id' => 'stk_'.$this->id,
+            'object' => 'stk_request',
+            'payment_account_id' => 'acct_'.$this->payment_account_id,
+            'short_code' => $this->paymentAccount?->external_account_reference,
+            'phone' => $this->maskedPhone(),
+            'amount' => $this->amount,
+            'account_reference' => $this->account_reference,
+            'description' => $this->description,
+            'status' => $this->status,
+            'result_code' => $this->result_code,
+            'result_description' => $this->result_desc,
+            'mpesa_receipt' => $this->mpesa_receipt,
+            'checkout_request_id' => $this->checkout_request_id,
+            'transaction' => $this->transaction?->toApiArray(),
+            'created_at' => $this->created_at?->toIso8601String(),
+            'completed_at' => $this->completed_at?->toIso8601String(),
+        ];
+    }
 
     public function isPending(): bool { return $this->status === 'pending'; }
 

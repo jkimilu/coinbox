@@ -10,6 +10,11 @@ use App\Models\Transaction;
 use BackedEnum;
 use UnitEnum;
 use Filament\Actions\ViewAction;
+use Throwable;
+use App\Payments\Mpesa\MpesaReversalService;
+use Filament\Notifications\Notification;
+use Filament\Forms\Components\TextInput;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -62,6 +67,10 @@ class TransactionResource extends Resource
             TextEntry::make('payer_identifier')->label('Payer phone (as sent by Safaricom)')->placeholder('—'),
             TextEntry::make('paid_at')->dateTime(timezone: 'Africa/Nairobi'),
             TextEntry::make('created_at')->label('Recorded at')->dateTime(timezone: 'Africa/Nairobi'),
+            TextEntry::make('latest_reversal')->label('Reversal request')
+                ->state(fn (Transaction $r) => self::reversalStatus($r))
+                ->visible(fn (Transaction $r) => $r->reversalRequests()->exists())
+                ->columnSpanFull(),
             KeyValueEntry::make('metadata')->columnSpanFull(),
         ]);
     }
@@ -87,7 +96,7 @@ class TransactionResource extends Resource
                         ->when($data['from'] ?? null, fn ($q, $v) => $q->where('paid_at', '>=', Carbon::parse($v, 'Africa/Nairobi')->startOfDay()->utc()))
                         ->when($data['until'] ?? null, fn ($q, $v) => $q->where('paid_at', '<=', Carbon::parse($v, 'Africa/Nairobi')->endOfDay()->utc()))),
             ])
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([ViewAction::make(), self::reverseAction()]);
     }
 
     /** One-line hover summary of a payment, reused on several columns. */
@@ -154,5 +163,44 @@ class TransactionResource extends Resource
     public static function getPages(): array
     {
         return ['index' => ListTransactions::route('/')];
+    }
+
+    /** Asks Safaricom to send the money back to the customer. Used in the merchant and admin panels. */
+    public static function reverseAction(): Action
+    {
+        return Action::make('reverse')
+            ->label('Reverse payment')
+            ->icon(Heroicon::OutlinedArrowUturnLeft)
+            ->color('danger')
+            ->visible(fn (Transaction $r) => app(MpesaReversalService::class)->blocker($r) === null)
+            ->modalHeading('Reverse this payment?')
+            ->modalDescription(fn (Transaction $r) => 'Safaricom will return KES '.number_format((float) $r->amount, 2).' from your M-Pesa account to the customer and send them an SMS. This cannot be undone.')
+            ->modalSubmitActionLabel('Reverse payment')
+            ->schema([
+                TextInput::make('reason')->label('Reason')->required()->minLength(3)->maxLength(100)
+                    ->placeholder('e.g. Paid twice'),
+            ])
+            ->action(function (Transaction $record, array $data) {
+                try {
+                    app(MpesaReversalService::class)->request($record, auth()->user(), trim($data['reason']));
+                    Notification::make()->success()->title('Reversal sent to Safaricom')
+                        ->body('Safaricom usually confirms within a minute. The payment shows as Reversed once they do.')->send();
+                } catch (Throwable $e) {
+                    Notification::make()->danger()->title('Reversal not sent')->body($e->getMessage())->persistent()->send();
+                }
+            });
+    }
+
+    public static function reversalStatus(Transaction $r): string
+    {
+        $req = $r->reversalRequests()->latest()->first();
+
+        return match ($req?->status) {
+            null => '—',
+            'pending' => 'Waiting for Safaricom (sent '.$req->created_at->setTimezone('Africa/Nairobi')->format('j M, H:i').')',
+            'succeeded' => 'Reversed by Safaricom'.($req->reversal_receipt ? ' · receipt '.$req->reversal_receipt : ''),
+            'timeout' => 'Safaricom timed out. Check the M-Pesa portal before trying again.',
+            default => 'Failed: '.($req->result_desc ?: 'unknown error'),
+        };
     }
 }

@@ -61,6 +61,7 @@ class Transaction extends Model
     public function providerEvent(): BelongsTo { return $this->belongsTo(ProviderEvent::class); }
     public function reverses(): BelongsTo { return $this->belongsTo(self::class, 'reverses_transaction_id'); }
     public function reversals(): HasMany { return $this->hasMany(self::class, 'reverses_transaction_id'); }
+    public function reversalRequests(): HasMany { return $this->hasMany(ReversalRequest::class); }
 
     /** Public API representation (the common transaction format). */
     public function toApiArray(): array

@@ -162,8 +162,39 @@ curl -H "Authorization: Bearer cbx_xxxxxxxxxxxx_..." https://YOUR-COINBOX-DOMAIN
 | `GET /api/v1/transactions/reference/{reference}` | Find by invoice / account number |
 | `GET /api/v1/transactions/receipt/{receipt}` | Find by M-Pesa receipt (e.g. `QHX123ABC`) |
 | `GET /api/v1/reports/collections?from=2026-10-01&to=2026-10-31` | Totals for a date range, grouped by `day` or `month` |
+| `POST /api/v1/stk` | Send a payment prompt to a customer's phone (see C below) |
+| `GET /api/v1/stk/{id}` | Result of a payment prompt |
 
 For pagination, pass the `next_cursor` value back as `?cursor=` to get the next page.
+
+### C. Ask a customer to pay (STK push)
+
+Sends an M-Pesa PIN prompt to the customer's phone. The money goes straight into your PayBill or Till.
+
+Before you start:
+- Your Daraja app needs **Lipa na M-Pesa Online** enabled, and the account needs its **passkey** (Payment accounts → Update Daraja credentials).
+- Create an API key with **Send M-Pesa payment prompts** ticked. Keys with nothing ticked are read-only and cannot send prompts.
+
+```bash
+curl -X POST https://YOUR-COINBOX-DOMAIN/api/v1/stk \
+  -H "Authorization: Bearer cbx_xxxxxxxxxxxx_..." -H "Content-Type: application/json" \
+  -d '{"short_code":"600984","phone":"0712345678","amount":250,"account_reference":"100#INV001","description":"Invoice 1"}'
+```
+
+| Field | |
+|---|---|
+| `short_code` or `account_id` | Your PayBill number, a till number or store number, or an `acct_…` id from `GET /api/v1/accounts` |
+| `phone` | Customer's Safaricom number, e.g. `0712345678` or `254712345678` |
+| `amount` | Whole shillings, 1 to 250,000 |
+| `account_reference` | Up to 12 characters. Required for PayBills. Account numbers like `100#INV001` are routed exactly as if the customer typed them. Ignored by Safaricom for Tills |
+| `description` | Optional, up to 13 characters |
+
+The reply (`202`) has an `id` like `stk_01J…` and `"status": "pending"`. The customer then enters their PIN. To get the result:
+
+- **Webhook:** a successful payment arrives as a normal `transaction.succeeded` event, like any other payment.
+- **Poll:** `GET /api/v1/stk/{id}`. `status` becomes `succeeded`, `failed`, `cancelled` (customer declined) or `timeout`. On success the `transaction` field holds the payment.
+
+Limits: 30 prompts a minute per API key, and 3 a minute to the same phone number.
 
 > **About "balance":** the balance endpoint returns a `collection_summary` of payments CoinBox has *recorded*. It is **not** your M-Pesa account balance and is not money you can withdraw from CoinBox. Your funds are always in your own PayBill or Till.
 

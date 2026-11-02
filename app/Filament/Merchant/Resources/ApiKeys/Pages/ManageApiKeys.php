@@ -23,7 +23,7 @@ class ManageApiKeys extends ManageRecords
             Action::make('create')->label('Create API key')->icon(Heroicon::OutlinedPlus)
                 ->schema([
                     TextInput::make('name')->required()->maxLength(100)->placeholder('e.g. ERP integration'),
-                    CheckboxList::make('abilities')->options(ApiKey::ABILITIES)->helperText('Leave all unticked for full read access.'),
+                    CheckboxList::make('abilities')->options(ApiKey::ABILITIES)->helperText('Leave all unticked for full read access. Sending payment prompts must always be ticked.'),
                     DatePicker::make('expires_at')->label('Expires (optional)')->minDate(now()->addDay()),
                 ])
                 ->action(function (array $data) {

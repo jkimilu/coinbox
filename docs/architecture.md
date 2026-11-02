@@ -51,6 +51,8 @@ GET /api/v1/transactions/{id}	Retrieve a specific transaction
 GET /api/v1/transactions/reference/{reference}	Find a transaction by invoice/reference
 GET /api/v1/transactions/receipt/{receipt}	Find a transaction by provider receipt
 GET /api/v1/reports/collections	Retrieve collection summaries for a date range
+POST /api/v1/stk	Send an M-Pesa PIN prompt (STK push) to a customer's phone
+GET /api/v1/stk/{id}	Result of a PIN prompt
 
 All endpoints will enforce merchant ownership, so one merchant cannot retrieve another merchant's payments.
 4. What we should remove from the original design

@@ -31,6 +31,8 @@ class MpesaAccountConnector
                     'consumer_key' => trim($data['consumer_key']),
                     'consumer_secret' => trim($data['consumer_secret']),
                     'passkey' => isset($data['passkey']) ? trim($data['passkey']) : null,
+                    'initiator_name' => isset($data['initiator_name']) ? trim($data['initiator_name']) : null,
+                    'security_credential' => isset($data['security_credential']) ? trim($data['security_credential']) : null,
                 ]),
             ]);
 
@@ -62,7 +64,7 @@ class MpesaAccountConnector
     {
         $cred = $account->credentials;
         $secrets = $cred->secrets;
-        foreach (['consumer_key', 'consumer_secret', 'passkey'] as $field) {
+        foreach (['consumer_key', 'consumer_secret', 'passkey', 'initiator_name', 'security_credential'] as $field) {
             if (filled($data[$field] ?? null)) {
                 $secrets[$field] = trim($data[$field]);
             }

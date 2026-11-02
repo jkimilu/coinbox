@@ -35,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('merchant-api', fn (Request $request) => Limit::perMinute(120)
             ->by(substr((string) $request->bearerToken(), 0, 17) ?: $request->ip()));
 
+        // PIN prompts reach real phones: cap per key, and per customer number so one phone isn't spammed.
+        RateLimiter::for('merchant-stk', fn (Request $request) => [
+            Limit::perMinute(30)->by('stk:'.substr((string) $request->bearerToken(), 0, 17)),
+            Limit::perMinute(3)->by('stk-phone:'.(\App\Billing\StkTopUpService::normalizePhone((string) $request->input('phone')) ?? $request->input('phone'))),
+        ]);
+
         RateLimiter::for('provider', fn (Request $request) => Limit::perMinute(600)->by($request->ip()));
     }
 }

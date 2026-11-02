@@ -3,6 +3,7 @@
 namespace App\Filament\Merchant\Resources\Transactions\Pages;
 
 use App\Exports\TransactionsExport;
+use App\Filament\Merchant\Concerns\RequestsPayments;
 use App\Filament\Merchant\Resources\Transactions\TransactionResource;
 use App\Models\AuditLog;
 use Filament\Actions\Action;
@@ -13,11 +14,14 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ListTransactions extends ListRecords
 {
+    use RequestsPayments;
+
     protected static string $resource = TransactionResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            $this->requestPaymentAction(),
             Action::make('export')
                 ->label('Export to Excel')
                 ->icon(Heroicon::OutlinedArrowDownTray)
